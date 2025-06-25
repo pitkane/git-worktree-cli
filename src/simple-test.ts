@@ -109,7 +109,19 @@ async function runTest() {
       return;
     }
     
-    // Test 5: gwtswitch
+    // Test 5: Test tab completion for gwtswitch
+    console.log("\n📋 Testing gwtswitch tab completion...");
+    const switchCompletionResult = await $`cd ${TEST_DIR} && ${SCRIPT_ROOT}/node_modules/.bin/tsx ${SCRIPT_ROOT}/src/git-worktree-completion.ts gwtswitch test`;
+    
+    if (switchCompletionResult.stdout.includes(uniqueBranch)) {
+      console.log("✅ gwtswitch tab completion test passed");
+    } else {
+      console.log("❌ gwtswitch tab completion test failed");
+      console.log(`   Expected to find: ${uniqueBranch}`);
+      console.log(`   Completion output: ${switchCompletionResult.stdout}`);
+    }
+    
+    // Test 6: gwtswitch
     console.log("\n📋 Testing gwtswitch...");
     const switchResult = await $`cd ${TEST_DIR} && source ${SCRIPT_ROOT}/src/bash-functionality.sh && gwtswitch ${uniqueBranch}`;
     
@@ -125,7 +137,21 @@ async function runTest() {
     // Switch back to project root
     process.chdir(TEST_DIR);
     
-    // Test 6: gwtremove
+    // Test 7: Test tab completion for gwtremove
+    console.log("\n📋 Testing gwtremove tab completion...");
+    // Run the completion script directly to test it
+    const completionResult = await $`cd ${TEST_DIR} && ${SCRIPT_ROOT}/node_modules/.bin/tsx ${SCRIPT_ROOT}/src/git-worktree-completion.ts gwtremove test`;
+    
+    // Should return the unique branch as a completion option
+    if (completionResult.stdout.includes(uniqueBranch)) {
+      console.log("✅ gwtremove tab completion test passed");
+    } else {
+      console.log("❌ gwtremove tab completion test failed");
+      console.log(`   Expected to find: ${uniqueBranch}`);
+      console.log(`   Completion output: ${completionResult.stdout}`);
+    }
+    
+    // Test 8: gwtremove
     console.log("\n📋 Testing gwtremove...");
     await $`cd ${TEST_DIR} && source ${SCRIPT_ROOT}/src/bash-functionality.sh && gwtremove ${uniqueBranch}`;
     

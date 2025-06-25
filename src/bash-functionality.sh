@@ -82,3 +82,27 @@ function _gwtadd_completion() {
 
 # Register completion for gwtadd
 complete -F _gwtadd_completion gwtadd
+
+# Tab completion for gwtremove
+function _gwtremove_completion() {
+	local current_word="${COMP_WORDS[COMP_CWORD]}"
+	local completions
+	
+	# Get completions from our TypeScript script
+	completions=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-completion.ts" "gwtremove" "$current_word" 2>/dev/null)
+	
+	if [[ -n "$completions" ]]; then
+		if [[ "$completions" =~ ^# ]]; then
+			echo >&2
+			echo "$completions" | sed 's/^# //' >&2
+			COMPREPLY=()
+		else
+			COMPREPLY=($(compgen -W "$completions" -- "$current_word"))
+		fi
+	else
+		COMPREPLY=()
+	fi
+}
+
+# Register completion for gwtremove
+complete -F _gwtremove_completion gwtremove

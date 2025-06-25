@@ -140,8 +140,8 @@ async function getAvailableBranches(command: string): Promise<string[]> {
 		return [];
 	}
 	
-	if (command === "gwtswitch") {
-		// For gwtswitch, return existing worktree branches
+	if (command === "gwtswitch" || command === "gwtremove") {
+		// For gwtswitch and gwtremove, return existing worktree branches
 		return worktrees
 			.map(wt => wt.branch ? wt.branch.replace('refs/heads/', '') : '')
 			.filter(branch => branch.length > 0);
@@ -156,7 +156,7 @@ async function getAvailableBranches(command: string): Promise<string[]> {
 
 async function completion() {
 	const args = process.argv.slice(2);
-	const command = args[0]; // gwtswitch or gwtadd
+	const command = args[0]; // gwtswitch, gwtadd, or gwtremove
 	const currentWord = args[1] || ""; // Current word being completed
 	
 	try {
