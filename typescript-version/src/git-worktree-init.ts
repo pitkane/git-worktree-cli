@@ -27,9 +27,7 @@ async function gwtinit(repoUrl: string) {
 		}
 		
 		console.log(`Cloning ${repoUrl}...`);
-		$.verbose = true;
-		await $`git clone ${repoUrl} ${repoName}`;
-		$.verbose = false;
+		await $({ stdio: 'inherit' })`git clone ${repoUrl} ${repoName}`;
 		
 		const defaultBranch = await $`cd ${repoName} && git symbolic-ref --short HEAD`.text();
 		const branchName = defaultBranch.trim();
