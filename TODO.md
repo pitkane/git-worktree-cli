@@ -54,33 +54,36 @@
 ## 🔄 In Progress (Rust Implementation)
 
 ### Core Commands (Need Full Implementation)
-- [ ] **`gwt add` command** - Create new worktrees from branch names 🚧
-  - [ ] Support folder names with slashes (e.g., feature/IP-487)
-  - [ ] Auto-branch from main/default branch
-  - [ ] Detect existing branches and check them out
-  - [ ] Auto-navigate to new worktree after creation
-  - [ ] Execute post-add hooks with streaming output
+- [x] **`gwt add` command** - Create new worktrees from branch names ✅
+  - ✅ Support folder names with slashes (e.g., feature/IP-487)
+  - ✅ Auto-branch from main/default branch
+  - ✅ Detect existing branches and check them out
+  - ✅ Execute post-add hooks with streaming output
+  - ✅ Smart path detection to find project root
 
-- [ ] **`gwt list` command** - Display worktrees in formatted table 🚧
-  - [ ] Show path and branch for each worktree
-  - [ ] Work from both project root and worktree directories
-  - [ ] Indicate bare repositories
-  - [ ] Properly aligned columnar output using tabled crate
+- [x] **`gwt list` command** - Display worktrees in formatted table ✅
+  - ✅ Show path and branch for each worktree
+  - ✅ Work from both project root and worktree directories
+  - ✅ Clean branch name display (removes refs/heads/ prefix)
+  - ✅ Properly aligned columnar output using tabled crate
+  - ✅ Handle bare repositories gracefully
 
-- [ ] **`gwt switch` command** - Switch between existing worktrees 🚧
-  - [ ] Quick navigation between worktree directories
-  - [ ] Show available worktrees when no branch specified
-  - [ ] Helpful error messages and suggestions
-  - [ ] Execute post-switch hooks
+- [x] **`gwt switch` command** - Switch between existing worktrees ✅
+  - ✅ Quick navigation between worktree directories
+  - ✅ Show available worktrees when no branch specified
+  - ✅ Helpful error messages and suggestions
+  - ✅ Execute post-switch hooks
+  - ✅ Directory change output for shell integration
 
-- [ ] **`gwt remove` command** - Remove worktrees with safety checks 🚧
-  - [ ] Remove current worktree when no parameter given
-  - [ ] Remove specified worktree when parameter provided
-  - [ ] Safety checks to prevent removing main/bare repository
-  - [ ] Interactive confirmation prompts
-  - [ ] Auto-navigate to project root when removing current worktree
-  - [ ] Remove associated git branches (except main branches)
-  - [ ] Execute post-remove hooks
+- [x] **`gwt remove` command** - Remove worktrees with safety checks ✅
+  - ✅ Remove current worktree when no parameter given
+  - ✅ Remove specified worktree when parameter provided
+  - ✅ Safety checks to prevent removing main/bare repository
+  - ✅ Interactive confirmation prompts
+  - ✅ Auto-navigate to project root when removing current worktree
+  - ✅ Remove associated git branches (except main branches)
+  - ✅ Execute post-remove hooks
+  - ✅ Find worktrees by branch name or path
 
 ### Shell Integration
 - [ ] **Tab completion** for all commands
