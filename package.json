@@ -1,11 +1,12 @@
 {
-  "name": "@mikko/scripts",
+  "name": "@mikko/git-worktree-scripts",
   "version": "1.0.0",
   "description": "",
   "type": "module",
   "scripts": {
     "initialize": "pnpx tsx ./src/initialize.ts",
     "script:test": "pnpx tsx ./src/test.ts",
+    "script:git-worktree-init": "pnpx tsx ./src/git-worktree-init.ts",
     "script:git-worktree-add": "pnpx tsx ./src/git-worktree-add.ts",
     "script:git-worktree-remove": "pnpx tsx ./src/git-worktree-remove.ts",
     "script:git-worktree-completion": "pnpx tsx ./src/git-worktree-completion.ts",
