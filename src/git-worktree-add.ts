@@ -189,9 +189,9 @@ async function gwtadd(folderName: string) {
       await $`cd ${gitWorkingDir} && git worktree add ${targetPath} -b ${branchName} origin/${branchName}`;
     } else {
       console.log(
-        `Creating new branch '${branchName}' from '${mainBranch}'...`
+        `Creating new branch '${branchName}' from 'origin/${mainBranch}'...`
       );
-      await $`cd ${gitWorkingDir} && git worktree add ${targetPath} -b ${branchName} ${mainBranch}`;
+      await $`cd ${gitWorkingDir} && git worktree add ${targetPath} -b ${branchName} origin/${mainBranch}`;
     }
 
     console.log(`✓ Worktree created at: ${targetPath}`);
