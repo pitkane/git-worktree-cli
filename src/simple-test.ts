@@ -153,7 +153,7 @@ async function runTest() {
     
     // Test 8: gwtremove
     console.log("\n📋 Testing gwtremove...");
-    await $`cd ${TEST_DIR} && source ${SCRIPT_ROOT}/src/bash-functionality.sh && gwtremove ${uniqueBranch}`;
+    await $`cd ${TEST_DIR} && source ${SCRIPT_ROOT}/src/bash-functionality.sh && echo "y" | gwtremove ${uniqueBranch}`;
     
     const devExistsAfterRemove1 = existsSync(join(TEST_DIR, uniqueBranch));
     const devExistsAfterRemove2 = existsSync(`/Users/mikkoh/${uniqueBranch}`);

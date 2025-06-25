@@ -16,8 +16,15 @@ interface GitWorktreeConfig {
 
 async function getMainBranch(gitRoot?: string): Promise<string> {
 	try {
-		// Try to read from config file first (when in project root)
-		const configPath = join(process.cwd(), "git-worktree-config.yaml");
+		// First, try to find the config file in current directory or project root
+		let configPath = join(process.cwd(), "git-worktree-config.yaml");
+		
+		// If not found in current directory and we have gitRoot, try looking in the parent of gitRoot
+		if (!existsSync(configPath) && gitRoot) {
+			const projectRoot = join(gitRoot, "..");
+			configPath = join(projectRoot, "git-worktree-config.yaml");
+		}
+		
 		if (existsSync(configPath)) {
 			const configContent = await readFile(configPath, "utf-8");
 			const config: GitWorktreeConfig = yaml.parse(configContent);
@@ -27,20 +34,21 @@ async function getMainBranch(gitRoot?: string): Promise<string> {
 		// If we have a git root, try git commands from there
 		if (gitRoot) {
 			try {
-				const remoteBranches = await $`cd ${gitRoot} && git branch -r --points-at refs/remotes/origin/HEAD 2>/dev/null`.text();
-				if (remoteBranches.trim()) {
-					const match = remoteBranches.match(/origin\/(.+)/);
-					if (match) {
-						return match[1].trim();
-					}
+				const symbolicRef = await $`cd ${gitRoot} && git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null`.text();
+				const match = symbolicRef.match(/refs\/remotes\/origin\/(.+)/);
+				if (match) {
+					return match[1].trim();
 				}
 			} catch {
-				// Try symbolic-ref method
+				// Try alternative method
 				try {
-					const symbolicRef = await $`cd ${gitRoot} && git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null`.text();
-					const match = symbolicRef.match(/refs\/remotes\/origin\/(.+)/);
-					if (match) {
-						return match[1].trim();
+					const remoteBranches = await $`cd ${gitRoot} && git branch -r --points-at refs/remotes/origin/HEAD 2>/dev/null`.text();
+					if (remoteBranches.trim()) {
+						// Parse output like "  origin/dev -> origin/dev" or "  origin/dev"
+						const match = remoteBranches.match(/origin\/([^\s\-]+)/);
+						if (match) {
+							return match[1].trim();
+						}
 					}
 				} catch {
 					// Continue to fallback
@@ -147,11 +155,6 @@ async function gwtadd(folderName: string) {
 
 		console.log(`✓ Worktree created at: ${targetPath}`);
 		console.log(`✓ Branch: ${branchName}`);
-		
-		// Navigate to the new worktree directory
-		console.log(`\nChanging to worktree directory...`);
-		process.chdir(targetPath);
-		console.log(`✓ Now in: ${process.cwd()}`);
 
 	} catch (error) {
 		console.error("Error:", error instanceof Error ? error.message : String(error));
