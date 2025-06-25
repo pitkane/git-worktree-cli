@@ -218,42 +218,69 @@ async function gwtremove(branchName?: string) {
 			console.log("\n⚠️  You are currently in this worktree. You will be moved to the project root after removal.");
 		}
 		
-		// Find a git repository to run the remove command from
-		let gitWorkingDir: string;
-		const otherWorktree = worktrees.find(wt => wt.path !== targetWorktree!.path);
-		if (otherWorktree) {
-			gitWorkingDir = otherWorktree.path;
-		} else {
+		// Ask for confirmation
+		console.log("");
+		const confirmation = await new Promise<string>((resolve) => {
+			process.stdout.write("Are you sure you want to remove this worktree? (y/N): ");
+			process.stdin.setEncoding('utf8');
+			process.stdin.once('data', (data) => {
+				// Clean up stdin immediately
+				process.stdin.pause();
+				resolve(data.toString().trim());
+			});
+		});
+		
+		if (confirmation.toLowerCase() !== 'y' && confirmation.toLowerCase() !== 'yes') {
+			console.log("Removal cancelled.");
+			process.exit(0);
+		}
+		
+		// Find the main branch worktree to run commands from
+		const mainBranches = ['main', 'master', 'dev', 'develop'];
+		let mainBranchWorktree = worktrees.find(wt => {
+			const branchName = wt.branch ? wt.branch.replace('refs/heads/', '') : '';
+			return mainBranches.includes(branchName);
+		});
+		
+		// If no main branch found, use any other worktree
+		if (!mainBranchWorktree) {
+			mainBranchWorktree = worktrees.find(wt => wt.path !== targetWorktree!.path);
+		}
+		
+		if (!mainBranchWorktree) {
 			throw new Error("No other worktrees found to execute git command from.");
 		}
 		
-		// Remove the worktree
-		console.log("\nRemoving worktree...");
-		await $`cd ${gitWorkingDir} && git worktree remove ${targetWorktree.path} --force`;
+		const gitWorkingDir = mainBranchWorktree.path;
 		
-		console.log(`✓ Worktree removed: ${targetWorktree.path}`);
-		console.log(`✓ Branch: ${cleanBranch}`);
+		// Change to main branch worktree to perform operations
+		const originalCwd = process.cwd();
+		process.chdir(gitWorkingDir);
 		
-		// If we were in the removed worktree, change to project root
-		if (willRemoveCurrent) {
-			// Find project root (directory containing git-worktree-config.yaml)
-			const configPath = join(process.cwd(), "git-worktree-config.yaml");
-			if (existsSync(configPath)) {
-				// Already in project root
-				console.log(`✓ Staying in project root: ${process.cwd()}`);
-			} else {
-				// Try to find project root
-				const parts = targetWorktree.path.split('/');
-				for (let i = parts.length - 1; i >= 0; i--) {
-					const testPath = parts.slice(0, i).join('/');
-					const testConfigPath = join(testPath, "git-worktree-config.yaml");
-					if (existsSync(testConfigPath)) {
-						process.chdir(testPath);
-						console.log(`✓ Changed to project root: ${process.cwd()}`);
-						break;
-					}
+		try {
+			// Remove the worktree
+			console.log("\nRemoving worktree...");
+			await $`git worktree remove ${targetWorktree.path} --force`;
+			
+			// Also delete the branch if it's not a main branch
+			if (!mainBranches.includes(cleanBranch)) {
+				try {
+					await $`git branch -D ${cleanBranch}`;
+					console.log(`✓ Worktree removed: ${targetWorktree.path}`);
+					console.log(`✓ Branch deleted: ${cleanBranch}`);
+				} catch (error) {
+					// Branch deletion failed, but worktree was removed
+					console.log(`✓ Worktree removed: ${targetWorktree.path}`);
+					console.log(`⚠️  Branch '${cleanBranch}' could not be deleted automatically`);
+					console.log(`   (Error: ${error instanceof Error ? error.message : String(error)})`);
 				}
+			} else {
+				console.log(`✓ Worktree removed: ${targetWorktree.path}`);
+				console.log(`✓ Branch: ${cleanBranch} (preserved - main branch)`);
 			}
+		} finally {
+			// Always return to original directory
+			process.chdir(originalCwd);
 		}
 		
 	} catch (error) {

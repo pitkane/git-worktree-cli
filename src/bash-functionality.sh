@@ -21,7 +21,27 @@ function gwtadd() {
 		return 1
 	fi
 	
-	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-add.ts" "$1"
+	local result
+	result=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-add.ts" "$1")
+	local exit_code=$?
+	
+	# Print the output from the script
+	echo "$result"
+	
+	if [ $exit_code -eq 0 ]; then
+		# Extract the target path from the output
+		local target_path
+		target_path=$(echo "$result" | grep "✓ Worktree created at:" | sed 's/✓ Worktree created at: //')
+		
+		if [ -n "$target_path" ] && [ -d "$target_path" ]; then
+			echo ""
+			echo "Changing to worktree directory..."
+			cd "$target_path"
+			echo "✓ Now in: $(pwd)"
+		fi
+	fi
+	
+	return $exit_code
 }
 
 function gwtswitch() {
@@ -29,7 +49,46 @@ function gwtswitch() {
 }
 
 function gwtremove() {
+	# Store original directory for fallback
+	local original_dir="$(pwd)"
+	
+	# Run the TypeScript script directly for interactive prompts
 	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-remove.ts" "$1"
+	local exit_code=$?
+	
+	if [ $exit_code -eq 0 ]; then
+		# Check if we're removing current worktree (no parameter given)
+		if [ -z "$1" ]; then
+			# Look for project root directory with config file
+			local project_root=""
+			local current_dir="$(pwd)"
+			
+			# First check if we're already in project root
+			if [ -f "git-worktree-config.yaml" ]; then
+				project_root="$current_dir"
+			else
+				# Search up the directory tree for the config file
+				local check_dir="$current_dir"
+				while [ "$check_dir" != "/" ]; do
+					check_dir="$(dirname "$check_dir")"
+					if [ -f "$check_dir/git-worktree-config.yaml" ]; then
+						project_root="$check_dir"
+						break
+					fi
+				done
+			fi
+			
+			# Navigate to project root if found
+			if [ -n "$project_root" ] && [ -d "$project_root" ]; then
+				echo ""
+				echo "Changing to project root..."
+				cd "$project_root"
+				echo "✓ Now in: $(pwd)"
+			fi
+		fi
+	fi
+	
+	return $exit_code
 }
 
 # Tab completion for gwtswitch
