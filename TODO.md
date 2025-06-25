@@ -20,6 +20,12 @@
   - Shows available local worktrees for completion
   - Displays helpful message when no worktrees found
   - Filters completions based on current input
+- [x] Implement gwtremove command
+  - Remove current worktree when no parameter given
+  - Remove specified worktree when parameter provided
+  - Safety checks to prevent removing main/bare repository
+  - Automatic navigation to project root when removing current worktree
+  - Clear confirmation messages and error handling
 
 ## Pending
 - [ ] Add Bitbucket PR search functionality for branches
