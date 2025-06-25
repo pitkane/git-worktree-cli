@@ -89,12 +89,12 @@ async function gwtadd(folderName: string) {
       console.log(
         `Branch '${branchName}' exists remotely, checking out remote branch...`
       );
-      await $`cd ${gitWorkingDir} && git worktree add ${targetPath} -b ${branchName} origin/${branchName}`;
+      await $({ stdio: 'inherit' })`cd ${gitWorkingDir} && git worktree add ${targetPath} -b ${branchName} origin/${branchName}`;
     } else {
       console.log(
         `Creating new branch '${branchName}' from 'origin/${mainBranch}'...`
       );
-      await $`cd ${gitWorkingDir} && git worktree add ${targetPath} -b ${branchName} origin/${mainBranch}`;
+      await $({ stdio: 'inherit' })`cd ${gitWorkingDir} && git worktree add ${targetPath} -b ${branchName} origin/${mainBranch}`;
     }
 
     console.log(`✓ Worktree created at: ${targetPath}`);

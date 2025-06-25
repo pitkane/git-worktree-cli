@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { $ } from "zx";
-import { execSync } from "node:child_process";
 import * as yaml from "yaml";
 
 $.verbose = false;
@@ -294,10 +293,27 @@ export async function executeHooks(
 				console.log(`   Executing: ${command}`);
 				
 				// Execute the hook in the working directory with real-time output
-				execSync(command, {
-					cwd: workingDirectory,
-					stdio: 'inherit',
-					env: { ...process.env, FORCE_COLOR: '1' }
+				// Using native exec with inherited stdio to ensure proper streaming
+				const { exec } = await import('node:child_process');
+				await new Promise<void>((resolve, reject) => {
+					const child = exec(command, {
+						cwd: workingDirectory,
+						env: { ...process.env, FORCE_COLOR: '1' }
+					});
+					
+					// Pipe stdout and stderr to parent process streams
+					if (child.stdout) child.stdout.pipe(process.stdout);
+					if (child.stderr) child.stderr.pipe(process.stderr);
+					
+					child.on('close', (code) => {
+						if (code === 0) {
+							resolve();
+						} else {
+							reject(new Error(`Command failed with exit code ${code}`));
+						}
+					});
+					
+					child.on('error', reject);
 				});
 				
 				console.log(`   ✓ Hook completed successfully`);

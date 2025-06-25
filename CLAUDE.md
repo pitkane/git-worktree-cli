@@ -198,3 +198,31 @@ Project TODOs are maintained in `TODO.md` for persistence across Claude Code ses
 - **Module System**: ES modules (`"type": "module"` in package.json)
 - **Linting**: Biome with recommended rules enabled
 - **File Organization**: Each command has its own TypeScript file, shared utilities in common functions
+
+## Important Technical Notes
+
+### Streaming Output with zx
+
+When using the `zx` library for shell commands, it's crucial to understand how to properly stream output in real-time:
+
+1. **Default Behavior**: By default, zx buffers command output until completion, even with `$.verbose = true`
+2. **Incorrect Approach**: Using `.pipe(process.stdout)` still captures output and doesn't provide true real-time streaming
+3. **Correct Solution**: Use `stdio: 'inherit'` to properly stream output:
+
+```typescript
+// ❌ Wrong - output is buffered
+await $`git clone ${repoUrl} ${repoName}`;
+
+// ❌ Wrong - still captures output
+await $`git clone ${repoUrl} ${repoName}`.pipe(process.stdout);
+
+// ✅ Correct - real-time streaming
+await $({ stdio: 'inherit' })`git clone ${repoUrl} ${repoName}`;
+```
+
+This is especially important for:
+- Long-running commands (git clone, npm install, builds)
+- Commands that show progress indicators
+- Interactive commands that require real-time feedback
+
+**Note**: When using `stdio: 'inherit'`, the command output cannot be captured programmatically with `.text()` or similar methods. Use this only when you need to display output to the user in real-time.

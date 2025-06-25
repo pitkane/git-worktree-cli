@@ -1,0 +1,22 @@
+[package]
+name = "git-worktree-manager"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name"]
+description = "A tool for managing git worktrees efficiently"
+
+[[bin]]
+name = "gwt"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "cargo", "env"] }
+clap_complete = "4.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+anyhow = "1.0"
+colored = "2.1"
+dirs = "5.0"
+which = "6.0"
+chrono = { version = "0.4", features = ["serde"] }
+tabled = "0.16"
