@@ -8,7 +8,7 @@ mod git;
 mod hooks;
 mod utils;
 
-use commands::{init, add, list, switch, remove};
+use commands::{init, add, list, remove};
 
 #[derive(Parser)]
 #[command(
@@ -40,12 +40,6 @@ enum Commands {
     /// List all worktrees in the current project
     List,
     
-    /// Switch to a different worktree
-    Switch {
-        /// Branch name to switch to (shows available worktrees if not specified)
-        branch_name: Option<String>,
-    },
-    
     /// Remove a worktree
     Remove {
         /// Branch name to remove (current worktree if not specified)
@@ -72,9 +66,6 @@ fn main() -> Result<()> {
         }
         Commands::List => {
             list::run()?;
-        }
-        Commands::Switch { branch_name } => {
-            switch::run(branch_name.as_deref())?;
         }
         Commands::Remove { branch_name } => {
             remove::run(branch_name.as_deref())?;

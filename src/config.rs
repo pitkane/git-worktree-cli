@@ -21,8 +21,6 @@ pub struct Hooks {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub post_add: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub post_switch: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub post_remove: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub post_init: Option<Vec<String>>,
@@ -36,7 +34,6 @@ impl GitWorktreeConfig {
             created_at: Utc::now(),
             hooks: Some(Hooks {
                 post_add: Some(vec!["# npm install".to_string()]),
-                post_switch: Some(vec!["# echo 'Switched to branch ${branchName}'".to_string()]),
                 post_remove: Some(vec!["# echo 'Removed worktree for branch ${branchName}'".to_string()]),
                 post_init: Some(vec!["# echo 'Initialized git worktree project'".to_string()]),
             }),
@@ -103,7 +100,6 @@ mod tests {
         
         let hooks = config.hooks.unwrap();
         assert!(hooks.post_add.is_some());
-        assert!(hooks.post_switch.is_some());
         assert!(hooks.post_remove.is_some());
         assert!(hooks.post_init.is_some());
     }
