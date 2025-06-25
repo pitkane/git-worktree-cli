@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **List worktrees**: `gwt list` - List all worktrees in a formatted table
 - **Remove worktree**: `gwt remove [branch-name]` - Remove existing worktrees with confirmation
 - **Generate completions**: `gwt completions <shell>` - Generate shell completion scripts
+- **Tab completion**: Dynamic branch name completion for add/remove commands (see completions/SETUP.md)
 
 ### Legacy TypeScript Version
 The original TypeScript implementation has been moved to `typescript-version/` directory for reference.
