@@ -1,8 +1,8 @@
-# Git Worktree Scripts
+# Git Worktree Manager (gwt)
 
-🌿 **Enhanced Git Worktree Management** 🌿
+🌿 **Enhanced Git Worktree Management with Rust** 🌿
 
-Stop juggling multiple git clones or constantly switching branches. Git worktrees let you have multiple working directories from the same repository, each checked out to different branches. This tool makes managing them effortless.
+Stop juggling multiple git clones or constantly switching branches. Git worktrees let you have multiple working directories from the same repository, each checked out to different branches. This Rust-powered tool makes managing them effortless with **real-time streaming output**.
 
 ## What are Git Worktrees?
 
@@ -27,88 +27,112 @@ Each directory is a separate working tree of the same repository. No more stashi
 
 ## Installation
 
+### Option 1: Build from Source (Recommended)
+
 1. **Clone this repository:**
    ```bash
    git clone git@github.com:pitkane/git-worktree-scripts.git ~/.git-worktree-scripts
    cd ~/.git-worktree-scripts
    ```
 
-2. **Install dependencies:**
+2. **Build the binary:**
    ```bash
-   pnpm install
+   cargo build --release
    ```
 
-3. **Add functions to your shell:**
+3. **Install the binary:**
    ```bash
-   pnpm initialize
-   source ~/.zshrc  # or restart your terminal
+   # Copy to your PATH
+   sudo cp target/release/gwt /usr/local/bin/
+   # Or add to your shell config
+   echo 'export PATH="$HOME/.git-worktree-scripts/target/release:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
    ```
+
+4. **Generate shell completions (optional):**
+   ```bash
+   # For zsh
+   gwt completions zsh > ~/.zsh/completions/_gwt
+   # For bash  
+   gwt completions bash > ~/.bash_completion.d/gwt
+   ```
+
+### Option 2: Use Legacy TypeScript Version
+
+The original TypeScript implementation is available in the `typescript-version/` directory:
+```bash
+cd typescript-version
+pnpm install
+pnpm initialize
+source ~/.zshrc
+```
 
 ## Quick Start Workflow
 
 ### 1. Initialize a Project
 ```bash
-# Clone and setup worktree structure
-gwtinit git@github.com:username/repo.git
+# Clone and setup worktree structure with REAL-TIME OUTPUT!
+gwt init git@github.com:username/repo.git
 
 # This creates:
 # - main/ directory (default branch)
 # - git-worktree-config.yaml (project metadata)
+# You'll see git clone progress in real-time!
 ```
 
 ### 2. Create Feature Branches
 ```bash
 # Create new feature worktree
-gwtadd feature/user-auth
+gwt add feature/user-auth
 # Creates feature/user-auth/ directory and automatically switches to it
 
 # Create bugfix worktree  
-gwtadd bugfix/login-error
+gwt add bugfix/login-error
 ```
 
 ### 3. Switch Between Work
 ```bash
 # Quick switch between worktrees
-gwtswitch main
-gwtswitch feature/user-auth
-gwtswitch bugfix/login-error
+gwt switch main
+gwt switch feature/user-auth
+gwt switch bugfix/login-error
 
 # See all your worktrees
-gwtlist
+gwt list
 ```
 
 ### 4. Clean Up When Done
 ```bash
 # Remove completed feature
-gwtremove feature/user-auth  # Removes worktree and branch
+gwt remove feature/user-auth  # Removes worktree and branch
 
 # Or remove current worktree
-gwtremove  # Removes current worktree you're in
+gwt remove  # Removes current worktree you're in
 ```
 
 ## Real-World Example
 
 ```bash
-# Start new project
-gwtinit git@github.com:company/web-app.git
+# Start new project with streaming git clone output
+gwt init git@github.com:company/web-app.git
 cd main
 
 # Work on main features
-gwtadd feature/shopping-cart
+gwt add feature/shopping-cart
 # Now in feature/shopping-cart/ directory
 # Make commits, push changes...
 
 # Urgent bugfix needed - no stashing required!
-gwtadd hotfix/payment-bug
+gwt add hotfix/payment-bug
 # Now in hotfix/payment-bug/ directory  
 # Fix bug, commit, push...
 
 # Back to feature work
-gwtswitch feature/shopping-cart
+gwt switch feature/shopping-cart
 # Continue where you left off
 
 # Review all work
-gwtlist
+gwt list
 # Shows:
 # PATH                          BRANCH
 # /path/to/main                 main
@@ -116,20 +140,25 @@ gwtlist
 # /path/to/hotfix/payment-bug   hotfix/payment-bug
 
 # Clean up merged work
-gwtremove hotfix/payment-bug
+gwt remove hotfix/payment-bug
 ```
 
 ## Commands Reference
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `gwtinit <url>` | Initialize worktree project from repo | `gwtinit git@github.com:user/repo.git` |
-| `gwtlist` | List all worktrees | `gwtlist` |
-| `gwtadd <branch>` | Create new worktree/branch | `gwtadd feature/new-ui` |
-| `gwtswitch <branch>` | Switch to existing worktree | `gwtswitch main` |
-| `gwtremove [branch]` | Remove worktree (current if no args) | `gwtremove old-feature` |
+| Command | Description | Example | Status |
+|---------|-------------|---------|---------|
+| `gwt init <url>` | Initialize worktree project from repo | `gwt init git@github.com:user/repo.git` | ✅ **Working** |
+| `gwt list` | List all worktrees | `gwt list` | 🔄 *In Progress* |
+| `gwt add <branch>` | Create new worktree/branch | `gwt add feature/new-ui` | 🔄 *In Progress* |
+| `gwt switch <branch>` | Switch to existing worktree | `gwt switch main` | 🔄 *In Progress* |
+| `gwt remove [branch]` | Remove worktree (current if no args) | `gwt remove old-feature` | 🔄 *In Progress* |
+| `gwt completions <shell>` | Generate shell completions | `gwt completions zsh` | ✅ **Working** |
 
-All commands include tab completion and helpful error messages.
+**New in Rust version:**
+- ✅ **Real-time streaming output** - See git clone progress live!
+- ✅ **Single binary** - No Node.js dependency
+- ✅ **Built-in completions** - Generate for bash, zsh, fish
+- ✅ **Better performance** - Compiled Rust vs interpreted TypeScript
 
 ## Hooks & Automation
 
