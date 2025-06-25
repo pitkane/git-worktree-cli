@@ -172,6 +172,11 @@ pub fn run(branch_name: Option<&str>) -> Result<()> {
         println!("{}", format!("✓ Branch: {} (preserved - main branch)", branch_display).green());
     }
     
+    // If we removed the current worktree, change to project root before executing hooks
+    if will_remove_current {
+        std::env::set_current_dir(&project_root)?;
+    }
+    
     // Execute post-remove hooks
     hooks::execute_hooks(
         "postRemove",
