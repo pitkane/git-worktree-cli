@@ -36,8 +36,6 @@ createdAt: 2025-06-25T17:25:28.766876Z
 hooks:
   postAdd:
   - '# npm install'
-  postSwitch:
-  - '# echo ''Switched to branch ${{branchName}}'''
   postRemove:
   - '# echo ''Removed worktree for branch ${{branchName}}'''
   postInit:

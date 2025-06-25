@@ -15,7 +15,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Initialize project**: `gwt init <repository-url>` - Initialize a new worktree project from a repository URL
 - **Add worktree**: `gwt add <branch-name>` - Create new worktrees from branch names  
 - **List worktrees**: `gwt list` - List all worktrees in a formatted table
-- **Switch worktree**: `gwt switch <branch-name>` - Switch between existing worktrees
 - **Remove worktree**: `gwt remove [branch-name]` - Remove existing worktrees with confirmation
 - **Generate completions**: `gwt completions <shell>` - Generate shell completion scripts
 
@@ -28,7 +27,7 @@ This project is a **single Rust binary** that provides git worktree management f
 
 1. **Rust Binary** (`src/`): Core functionality written in Rust
    - `main.rs`: CLI entry point using clap for argument parsing
-   - `commands/`: Individual command implementations (init, add, list, switch, remove)
+   - `commands/`: Individual command implementations (init, add, list, remove)
    - `config.rs`: YAML configuration file handling using serde
    - `git.rs`: Git operations with native process execution and streaming output
    - `hooks.rs`: Hook execution system with real-time output streaming
@@ -54,7 +53,6 @@ The project includes a flexible hooks system that allows users to run custom com
 
 - **`postInit`**: Executed after `gwtinit` creates a new project
 - **`postAdd`**: Executed after `gwtadd` creates a new worktree
-- **`postSwitch`**: Executed after `gwtswitch` switches to a worktree
 - **`postRemove`**: Executed after `gwtremove` removes a worktree
 
 ### Variable Substitution
@@ -71,8 +69,6 @@ When `gwtinit` creates a new project, it generates a `git-worktree-config.yaml` 
 hooks:
   postAdd:
     - "# npm install"
-  postSwitch:
-    - "# echo 'Switched to branch ${branchName}'"
   postRemove:
     - "# echo 'Removed worktree for branch ${branchName}'"
   postInit:
@@ -89,8 +85,6 @@ hooks:
     - "echo 'Created worktree for ${branchName} at ${worktreePath}'"
     - "npm install"
     - "npm run init"
-  postSwitch:
-    - "echo 'Switched to branch ${branchName}'"
   postRemove:
     - "echo 'Removed worktree for branch ${branchName}'"
   postInit:
@@ -101,7 +95,7 @@ hooks:
 
 - **Real-time output**: Commands stream output live using `execSync` with `stdio: 'inherit'`
 - **Execution context**: 
-  - `postAdd`/`postSwitch`: Execute in the worktree directory
+  - `postAdd`: Execute in the worktree directory
   - `postRemove`/`postInit`: Execute in the project root directory
 - **Comment handling**: Lines starting with `#` are automatically skipped
 - **Error handling**: Failed hooks show warnings but don't stop execution
@@ -116,8 +110,6 @@ hooks:
     - "npm install"                    # Install dependencies
     - "npm run build"                  # Build project
     - "code ."                         # Open in VS Code
-  postSwitch:
-    - "git status"                     # Show current status
   postRemove:
     - "echo 'Cleaned up ${branchName}'" # Log cleanup
 ```
@@ -148,11 +140,9 @@ hooks:
 3. **`gwt list`**: Display all worktrees in a formatted table 🔄
    - ⚠️ Stub implementation only - needs full functionality
 
-4. **`gwt switch`**: Switch between existing worktrees 🔄
+4. **`gwt remove`**: Remove worktrees with safety checks 🔄
    - ⚠️ Stub implementation only - needs full functionality
 
-5. **`gwt remove`**: Remove worktrees with safety checks 🔄
-   - ⚠️ Stub implementation only - needs full functionality
 
 ### 🎯 Major Improvements Achieved
 
