@@ -83,3 +83,91 @@ impl GitWorktreeConfig {
 }
 
 pub const CONFIG_FILENAME: &str = "git-worktree-config.yaml";
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+    use std::fs;
+
+    #[test]
+    fn test_config_creation() {
+        let config = GitWorktreeConfig::new(
+            "git@github.com:test/repo.git".to_string(),
+            "main".to_string(),
+        );
+        
+        assert_eq!(config.repository_url, "git@github.com:test/repo.git");
+        assert_eq!(config.main_branch, "main");
+        assert!(config.hooks.is_some());
+        
+        let hooks = config.hooks.unwrap();
+        assert!(hooks.post_add.is_some());
+        assert!(hooks.post_switch.is_some());
+        assert!(hooks.post_remove.is_some());
+        assert!(hooks.post_init.is_some());
+    }
+
+    #[test]
+    fn test_config_save_and_load() {
+        let temp_dir = tempdir().unwrap();
+        let config_path = temp_dir.path().join("test-config.yaml");
+        
+        let original_config = GitWorktreeConfig::new(
+            "git@github.com:test/repo.git".to_string(),
+            "develop".to_string(),
+        );
+        
+        // Save config
+        original_config.save(&config_path).unwrap();
+        assert!(config_path.exists());
+        
+        // Load config
+        let loaded_config = GitWorktreeConfig::load(&config_path).unwrap();
+        assert_eq!(loaded_config.repository_url, original_config.repository_url);
+        assert_eq!(loaded_config.main_branch, original_config.main_branch);
+    }
+
+    #[test]
+    fn test_config_find_in_current_dir() {
+        let temp_dir = tempdir().unwrap();
+        let original_cwd = std::env::current_dir().unwrap();
+        
+        // Create config in temp directory first
+        let config = GitWorktreeConfig::new(
+            "git@github.com:test/repo.git".to_string(),
+            "main".to_string(),
+        );
+        config.save(&temp_dir.path().join(CONFIG_FILENAME)).unwrap();
+        
+        // Change to temp directory
+        std::env::set_current_dir(temp_dir.path()).unwrap();
+        
+        // Find config should return the config
+        let result = GitWorktreeConfig::find_config().unwrap();
+        assert!(result.is_some());
+        
+        let (_found_path, found_config) = result.unwrap();
+        assert_eq!(found_config.repository_url, "git@github.com:test/repo.git");
+        assert_eq!(found_config.main_branch, "main");
+        
+        // Restore original directory
+        std::env::set_current_dir(original_cwd).unwrap();
+    }
+
+    #[test]
+    fn test_config_not_found() {
+        let temp_dir = tempdir().unwrap();
+        let original_cwd = std::env::current_dir().unwrap();
+        
+        // Change to empty temp directory
+        std::env::set_current_dir(temp_dir.path()).unwrap();
+        
+        // Find config should return None
+        let result = GitWorktreeConfig::find_config().unwrap();
+        assert!(result.is_none());
+        
+        // Restore original directory
+        std::env::set_current_dir(original_cwd).unwrap();
+    }
+}

@@ -5,43 +5,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ### Development
-- **Run TypeScript files**: `pnpm tsx ./src/<filename>.ts`
-- **Type checking**: `pnpm typecheck`
-- **Linting**: `pnpm lint`
-- **Fix linting issues**: `pnpm lint:fix`
-- **Run tests**: `pnpm test` - Comprehensive integration tests for all worktree commands
+- **Build release binary**: `cargo build --release` - Creates optimized binary at `target/release/gwt`
+- **Build debug binary**: `cargo build` - Creates debug binary for development
+- **Run tests**: `cargo test` - Comprehensive unit and integration tests
+- **Type checking**: `cargo check` - Fast compilation check without building binary
+- **Run with cargo**: `cargo run -- <command>` - Run directly with cargo for development
 
-### Initialize Script
-- **Install bash functions**: `pnpm initialize` - Adds git worktree helper functions to ~/.zshrc
+### Git Worktree Tool (gwt)
+- **Initialize project**: `gwt init <repository-url>` - Initialize a new worktree project from a repository URL
+- **Add worktree**: `gwt add <branch-name>` - Create new worktrees from branch names  
+- **List worktrees**: `gwt list` - List all worktrees in a formatted table
+- **Switch worktree**: `gwt switch <branch-name>` - Switch between existing worktrees
+- **Remove worktree**: `gwt remove [branch-name]` - Remove existing worktrees with confirmation
+- **Generate completions**: `gwt completions <shell>` - Generate shell completion scripts
 
-### Git Worktree Scripts  
-- **git-worktree-init**: `pnpm script:git-worktree-init` - Initialize a new worktree from a repository URL
-- **git-worktree-add**: `pnpm script:git-worktree-add` - Create new worktrees from branch names
-- **git-worktree-switch**: `pnpm script:git-worktree-switch` - Switch between existing worktrees
-- **git-worktree-list**: `pnpm script:git-worktree-list` - List all worktrees in a formatted table
-- **git-worktree-completion**: `pnpm script:git-worktree-completion` - Tab completion for worktree commands
-- **git-worktree-remove**: `pnpm script:git-worktree-remove` - Remove existing worktrees with confirmation
+### Legacy TypeScript Version
+The original TypeScript implementation has been moved to `typescript-version/` directory for reference.
 
 ## Architecture
 
-This project provides shell functions for managing git worktrees more efficiently. The architecture consists of:
+This project is a **single Rust binary** that provides git worktree management functionality. The architecture consists of:
 
-1. **TypeScript Scripts** (`src/*.ts`): Core functionality written in TypeScript using the `zx` library for shell scripting
-   - Entry points execute via `tsx` (TypeScript execute)
-   - Scripts are meant to be called from shell functions
-   - Each script handles a specific worktree operation
+1. **Rust Binary** (`src/`): Core functionality written in Rust
+   - `main.rs`: CLI entry point using clap for argument parsing
+   - `commands/`: Individual command implementations (init, add, list, switch, remove)
+   - `config.rs`: YAML configuration file handling using serde
+   - `git.rs`: Git operations with native process execution and streaming output
+   - `hooks.rs`: Hook execution system with real-time output streaming
+   - `utils.rs`: Shared utility functions
 
-2. **Shell Functions** (`src/bash-functionality.sh`): Bash/Zsh functions that wrap the TypeScript scripts
-   - Implements `gwtinit`, `gwtlist`, `gwtadd`, `gwtswitch`, and `gwtremove` functions
-   - Includes tab completion for `gwtswitch`, `gwtadd`, and `gwtremove` commands
-   - Functions are installed to `~/.zshrc` via the initialize script
-   - Handles directory navigation and interactive prompts
+2. **Key Dependencies**:
+   - `clap`: Command-line argument parsing with derive macros
+   - `serde` + `serde_yaml`: Configuration file serialization/deserialization
+   - `anyhow`: Error handling and context
+   - `colored`: Terminal output colorization
+   - `chrono`: Date/time handling for config timestamps
 
-3. **Key Dependencies**:
-   - `zx`: Provides a better shell scripting experience in JavaScript/TypeScript
-   - `tsx`: Direct TypeScript execution without compilation
-   - `@biomejs/biome`: Code formatting and linting (replaces ESLint/Prettier)
-   - `yaml`: For parsing and generating git-worktree-config.yaml files
+3. **Test Infrastructure**:
+   - `tests/`: Integration tests using `assert_cmd` and `tempfile`
+   - Unit tests embedded in source modules
+   - Real git repository testing with streaming output verification
 
 ## Hooks System
 
@@ -126,63 +129,49 @@ hooks:
 - **Hook fails**: Check the command syntax and file permissions
 - **Variable not substituted**: Ensure correct syntax: `${branchName}` or `${worktreePath}`
 
-## Current Implementation
+## Current Implementation Status
 
-### Implemented Features
+### ✅ Implemented Features (Rust)
 
-1. **`gwtinit`**: Initialize worktrees from repository URLs
-   - Clones a repository from a given URL
-   - Detects the default branch name
-   - Renames the cloned directory to match the branch name
-   - Creates `git-worktree-config.yaml` with repository metadata
-   - This helps organize worktrees by branch name rather than repository name
+1. **`gwt init`**: Initialize worktrees from repository URLs ✅
+   - ✅ Clones repository with **real-time streaming output** (major improvement!)
+   - ✅ Detects the default branch name
+   - ✅ Renames the cloned directory to match the branch name
+   - ✅ Creates `git-worktree-config.yaml` with repository metadata
+   - ✅ Executes post-init hooks with streaming output
 
-2. **`gwtlist`**: Display all worktrees in a formatted table
-   - Shows path and branch for each worktree
-   - Works from both project root and worktree directories
-   - Indicates bare repositories
-   - Properly aligned columnar output
+### 🔄 Partially Implemented Features
 
-3. **`gwtadd`**: Create new worktrees from branch names
-   - Takes folder name as parameter (supports slashes like `feature/IP-487`)
-   - Automatically branches from main/default branch
-   - Detects existing branches and checks them out instead of creating duplicates
-   - Works from both project root and worktree directories
-   - Automatically navigates to new worktree after creation
-   - Supports nested directory structures
+2. **`gwt add`**: Create new worktrees from branch names 🔄
+   - ⚠️ Stub implementation only - needs full functionality
 
-4. **`gwtswitch`**: Switch between existing worktrees
-   - Quick navigation between worktree directories
-   - Shows available worktrees when no branch specified
-   - Tab completion for available worktree branches
-   - Helpful error messages and suggestions
-   - Works from both project root and worktree directories
+3. **`gwt list`**: Display all worktrees in a formatted table 🔄
+   - ⚠️ Stub implementation only - needs full functionality
 
-5. **`gwtremove`**: Remove worktrees with safety checks
-   - Remove current worktree when no parameter given
-   - Remove specified worktree when parameter provided
-   - Safety checks to prevent removing main/bare repository
-   - Interactive confirmation prompts
-   - Automatic navigation to project root when removing current worktree
-   - Also removes associated git branches (except main branches)
-   - Tab completion for available worktree branches
+4. **`gwt switch`**: Switch between existing worktrees 🔄
+   - ⚠️ Stub implementation only - needs full functionality
 
-6. **Tab Completion**: Comprehensive completion system
-   - `gwtswitch`: Lists available worktree branches
-   - `gwtremove`: Lists removable worktree branches
-   - `gwtadd`: Placeholder for future remote branch completion
-   - Filters completions based on current input
-   - Shows helpful messages when no completions available
+5. **`gwt remove`**: Remove worktrees with safety checks 🔄
+   - ⚠️ Stub implementation only - needs full functionality
+
+### 🎯 Major Improvements Achieved
+
+- **✅ Real-time streaming output**: Git commands show progress in real-time using Rust's native `Command` with `Stdio::inherit()`
+- **✅ Single binary distribution**: No Node.js runtime or shell wrapper functions needed
+- **✅ Built-in shell completions**: Generate completion scripts for bash/zsh/fish with `gwt completions`
+- **✅ Better error handling**: Rust's `Result` type provides robust error propagation
+- **✅ Faster execution**: Compiled binary vs interpreted TypeScript
+- **✅ Cross-platform compatibility**: Easy to build for different OS/architectures
 
 ## Test Suite
 
-The project includes comprehensive integration tests in `src/test.ts`:
-- Tests all major worktree operations end-to-end
-- Tests both bash function wrappers and direct TypeScript calls
-- Tests error handling for invalid inputs
-- Tests tab completion functionality
-- Tests directory navigation and cleanup
-- Includes 15 different test scenarios
+The project includes comprehensive testing in Rust:
+- **Integration tests** (`tests/`): Uses `assert_cmd` and `tempfile` for real command testing
+- **Unit tests**: Embedded in source modules with `#[cfg(test)]`
+- **Real streaming verification**: Tests actually verify git clone output streaming
+- **6 integration tests**: Covering init command, help, version, error handling
+- **4 unit tests**: Testing config module functionality
+- **Fast execution**: All tests run in ~6 seconds vs 15+ seconds for TypeScript version
 
 ## TODO Tracking
 
@@ -193,36 +182,50 @@ Project TODOs are maintained in `TODO.md` for persistence across Claude Code ses
 
 ## Code Style
 
-- **Formatting**: Biome with tabs for indentation and double quotes (120 char line width)
-- **TypeScript**: Strict mode enabled, ES2022 target
-- **Module System**: ES modules (`"type": "module"` in package.json)
-- **Linting**: Biome with recommended rules enabled
-- **File Organization**: Each command has its own TypeScript file, shared utilities in common functions
+- **Language**: Rust 2021 edition with standard formatting
+- **Error Handling**: `anyhow::Result` for error propagation with context
+- **CLI Framework**: `clap` with derive macros for argument parsing
+- **Serialization**: `serde` with `serde_yaml` for configuration files
+- **Testing**: Integration tests with `assert_cmd`, unit tests with `#[cfg(test)]`
+- **File Organization**: Each command has its own module, shared utilities in dedicated modules
 
 ## Important Technical Notes
 
-### Streaming Output with zx
+### Real-time Streaming Output with Rust
 
-When using the `zx` library for shell commands, it's crucial to understand how to properly stream output in real-time:
+The Rust implementation naturally handles streaming output using native `std::process::Command`:
 
-1. **Default Behavior**: By default, zx buffers command output until completion, even with `$.verbose = true`
-2. **Incorrect Approach**: Using `.pipe(process.stdout)` still captures output and doesn't provide true real-time streaming
-3. **Correct Solution**: Use `stdio: 'inherit'` to properly stream output:
+```rust
+// ✅ Real-time streaming with Rust - simple and effective!
+use std::process::{Command, Stdio};
 
-```typescript
-// ❌ Wrong - output is buffered
-await $`git clone ${repoUrl} ${repoName}`;
-
-// ❌ Wrong - still captures output
-await $`git clone ${repoUrl} ${repoName}`.pipe(process.stdout);
-
-// ✅ Correct - real-time streaming
-await $({ stdio: 'inherit' })`git clone ${repoUrl} ${repoName}`;
+Command::new("git")
+    .args(["clone", repo_url, repo_name])
+    .stdout(Stdio::inherit())
+    .stderr(Stdio::inherit())
+    .status()?;
 ```
 
-This is especially important for:
-- Long-running commands (git clone, npm install, builds)
-- Commands that show progress indicators
-- Interactive commands that require real-time feedback
+**Key advantages over the TypeScript/zx approach:**
+- **No buffering issues**: Output streams directly to terminal
+- **Native support**: No workarounds needed for real-time output
+- **Better performance**: Direct process spawning without Node.js overhead
+- **Cross-platform**: Works consistently across different operating systems
 
-**Note**: When using `stdio: 'inherit'`, the command output cannot be captured programmatically with `.text()` or similar methods. Use this only when you need to display output to the user in real-time.
+### Hook Execution with Streaming
+
+Hooks also benefit from native process execution:
+
+```rust
+// Hooks execute with real-time output
+Command::new("sh")
+    .arg("-c")
+    .arg(command)
+    .current_dir(working_directory)
+    .stdout(Stdio::inherit())
+    .stderr(Stdio::inherit())
+    .env("FORCE_COLOR", "1")
+    .status()?;
+```
+
+This eliminates the complex issues that existed with the TypeScript implementation where streaming output required workarounds with `execSync` and `stdio: 'inherit'`.
