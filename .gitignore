@@ -145,3 +145,6 @@ Temporary Items
 
 # Git worktree configuration
 git-worktree-config.yaml
+
+# Test directories
+test-temp/
