@@ -148,10 +148,10 @@ gwt remove hotfix/payment-bug
 | Command | Description | Example | Status |
 |---------|-------------|---------|---------|
 | `gwt init <url>` | Initialize worktree project from repo | `gwt init git@github.com:user/repo.git` | ✅ **Working** |
-| `gwt list` | List all worktrees | `gwt list` | 🔄 *In Progress* |
-| `gwt add <branch>` | Create new worktree/branch | `gwt add feature/new-ui` | 🔄 *In Progress* |
-| `gwt switch <branch>` | Switch to existing worktree | `gwt switch main` | 🔄 *In Progress* |
-| `gwt remove [branch]` | Remove worktree (current if no args) | `gwt remove old-feature` | 🔄 *In Progress* |
+| `gwt list` | List all worktrees | `gwt list` | ✅ **Working** |
+| `gwt add <branch>` | Create new worktree/branch | `gwt add feature/new-ui` | ✅ **Working** |
+| `gwt switch <branch>` | Switch to existing worktree | `gwt switch main` | ✅ **Working** |
+| `gwt remove [branch]` | Remove worktree (current if no args) | `gwt remove old-feature` | ✅ **Working** |
 | `gwt completions <shell>` | Generate shell completions | `gwt completions zsh` | ✅ **Working** |
 
 **New in Rust version:**

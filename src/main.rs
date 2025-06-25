@@ -42,8 +42,8 @@ enum Commands {
     
     /// Switch to a different worktree
     Switch {
-        /// Branch name to switch to
-        branch_name: String,
+        /// Branch name to switch to (shows available worktrees if not specified)
+        branch_name: Option<String>,
     },
     
     /// Remove a worktree
@@ -74,7 +74,7 @@ fn main() -> Result<()> {
             list::run()?;
         }
         Commands::Switch { branch_name } => {
-            switch::run(&branch_name)?;
+            switch::run(branch_name.as_deref())?;
         }
         Commands::Remove { branch_name } => {
             remove::run(branch_name.as_deref())?;
