@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { $ } from "zx";
-import { findGitRoot, getMainBranch, branchExists } from "./git-worktree-utils.js";
+import { findGitRoot, getMainBranch, branchExists, executeHooks } from "./git-worktree-utils.js";
 
 $.verbose = false;
 
@@ -99,6 +99,12 @@ async function gwtadd(folderName: string) {
 
     console.log(`✓ Worktree created at: ${targetPath}`);
     console.log(`✓ Branch: ${branchName}`);
+
+    // Execute post-add hooks
+    await executeHooks("postAdd", targetPath, {
+      branchName: branchName,
+      worktreePath: targetPath
+    });
   } catch (error) {
     console.error(
       "Error:",

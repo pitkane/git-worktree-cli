@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { $ } from "zx";
 import { execSync } from "node:child_process";
-import { getAllWorktrees, getCurrentWorktreePath, type Worktree, cleanBranchName } from "./git-worktree-utils.js";
+import { getAllWorktrees, getCurrentWorktreePath, type Worktree, cleanBranchName, executeHooks } from "./git-worktree-utils.js";
 
 $.verbose = false;
 // Detect user's shell or use zsh as fallback
@@ -184,6 +184,12 @@ async function gwtremove(branchName?: string) {
       } else {
         console.log(`✓ Branch: ${cleanBranch} (preserved - main branch)`);
       }
+
+      // Execute post-remove hooks
+      await executeHooks("postRemove", projectRoot, {
+        branchName: cleanBranch,
+        worktreePath: targetWorktree.path
+      });
     } finally {
       // If we removed the current worktree, go to project root
       // Otherwise, return to original directory

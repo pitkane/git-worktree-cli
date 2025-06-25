@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import { $ } from "zx";
-import { getAllWorktrees, Worktree, cleanBranchName } from "./git-worktree-utils.js";
+import { getAllWorktrees, Worktree, cleanBranchName, executeHooks } from "./git-worktree-utils.js";
 
 $.verbose = false;
 
@@ -47,6 +47,12 @@ async function gwtswitch(branchName?: string) {
 		
 		// Switch to the target worktree
 		console.log(`Switching to worktree: ${targetWorktree.path}`);
+
+		// Execute post-switch hooks
+		await executeHooks("postSwitch", targetWorktree.path, {
+			branchName: branchName,
+			worktreePath: targetWorktree.path
+		});
 		
 	} catch (error) {
 		console.error("Error:", error instanceof Error ? error.message : String(error));

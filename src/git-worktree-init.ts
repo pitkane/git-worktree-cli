@@ -5,14 +5,10 @@ import { writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { $ } from "zx";
 import * as yaml from "yaml";
+import { executeHooks, type GitWorktreeConfig } from "./git-worktree-utils.js";
 
 $.verbose = false;
 
-interface GitWorktreeConfig {
-	repositoryUrl: string;
-	mainBranch: string;
-	createdAt: string;
-}
 
 async function gwtinit(repoUrl: string) {
 	if (!repoUrl) {
@@ -51,7 +47,21 @@ async function gwtinit(repoUrl: string) {
 		const config: GitWorktreeConfig = {
 			repositoryUrl: repoUrl,
 			mainBranch: branchName,
-			createdAt: new Date().toISOString()
+			createdAt: new Date().toISOString(),
+			hooks: {
+				postAdd: [
+					"# npm install"
+				],
+				postSwitch: [
+					"# echo 'Switched to branch ${branchName}'"
+				],
+				postRemove: [
+					"# echo 'Removed worktree for branch ${branchName}'"
+				],
+				postInit: [
+					"# echo 'Initialized git worktree project'"
+				]
+			}
 		};
 		
 		const configPath = join(projectRoot, "git-worktree-config.yaml");
@@ -61,6 +71,12 @@ async function gwtinit(repoUrl: string) {
 		console.log(`✓ Repository cloned to: ${finalDirName}`);
 		console.log(`✓ Default branch: ${branchName}`);
 		console.log(`✓ Config saved to: ${configPath}`);
+
+		// Execute post-init hooks
+		await executeHooks("postInit", join(projectRoot, finalDirName), {
+			branchName: branchName,
+			worktreePath: join(projectRoot, finalDirName)
+		});
 		
 	} catch (error) {
 		console.error("Error:", error instanceof Error ? error.message : String(error));

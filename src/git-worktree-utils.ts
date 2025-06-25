@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { $ } from "zx";
+import { execSync } from "node:child_process";
 import * as yaml from "yaml";
 
 $.verbose = false;
@@ -10,6 +11,12 @@ export interface GitWorktreeConfig {
 	repositoryUrl: string;
 	mainBranch: string;
 	createdAt: string;
+	hooks?: {
+		postAdd?: string[];
+		postSwitch?: string[];
+		postRemove?: string[];
+		postInit?: string[];
+	};
 }
 
 export interface Worktree {
@@ -224,5 +231,82 @@ export async function getCurrentWorktreePath(): Promise<string | null> {
 		return gitRoot.trim();
 	} catch {
 		return null;
+	}
+}
+
+export async function executeHooks(
+	hookType: "postAdd" | "postSwitch" | "postRemove" | "postInit",
+	workingDirectory: string,
+	context?: { branchName?: string; worktreePath?: string }
+): Promise<void> {
+	try {
+		// Find the config file
+		let configPath = join(process.cwd(), "git-worktree-config.yaml");
+		
+		// If not found in current directory, try looking in the parent directories
+		let currentDir = workingDirectory;
+		while (currentDir !== "/" && currentDir !== ".") {
+			const testConfigPath = join(currentDir, "git-worktree-config.yaml");
+			if (existsSync(testConfigPath)) {
+				configPath = testConfigPath;
+				break;
+			}
+			currentDir = join(currentDir, "..");
+		}
+
+		if (!existsSync(configPath)) {
+			// No config file found, skip hooks
+			return;
+		}
+
+		const configContent = await readFile(configPath, "utf-8");
+		const config: GitWorktreeConfig = yaml.parse(configContent);
+
+		if (!config.hooks || !config.hooks[hookType]) {
+			// No hooks defined for this type
+			return;
+		}
+
+		const hooks = config.hooks[hookType];
+		if (!hooks || hooks.length === 0) {
+			return;
+		}
+
+		console.log(`🪝 Running ${hookType} hooks...`);
+
+		for (const hook of hooks) {
+			try {
+				// Skip commented lines
+				if (hook.trim().startsWith("#")) {
+					console.log(`   Skipping commented hook: ${hook}`);
+					continue;
+				}
+
+				// Replace placeholders in the hook command
+				let command = hook;
+				if (context?.branchName) {
+					command = command.replace(/\$\{branchName\}/g, context.branchName);
+				}
+				if (context?.worktreePath) {
+					command = command.replace(/\$\{worktreePath\}/g, context.worktreePath);
+				}
+
+				console.log(`   Executing: ${command}`);
+				
+				// Execute the hook in the working directory with real-time output
+				execSync(command, {
+					cwd: workingDirectory,
+					stdio: 'inherit',
+					env: { ...process.env, FORCE_COLOR: '1' }
+				});
+				
+				console.log(`   ✓ Hook completed successfully`);
+			} catch (error) {
+				console.warn(`   ⚠️  Hook failed: ${error instanceof Error ? error.message : String(error)}`);
+				// Continue with other hooks even if one fails
+			}
+		}
+	} catch (error) {
+		console.warn(`⚠️  Failed to execute hooks: ${error instanceof Error ? error.message : String(error)}`);
 	}
 }

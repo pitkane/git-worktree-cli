@@ -43,6 +43,46 @@ This project provides shell functions for managing git worktrees more efficientl
    - `@biomejs/biome`: Code formatting and linting (replaces ESLint/Prettier)
    - `yaml`: For parsing and generating git-worktree-config.yaml files
 
+## Hooks System
+
+The project includes a flexible hooks system that allows users to run custom commands after various worktree operations. Hooks are defined in the `git-worktree-config.yaml` file and support variable substitution.
+
+### Available Hooks
+
+- **`postInit`**: Executed after `gwtinit` creates a new project
+- **`postAdd`**: Executed after `gwtadd` creates a new worktree
+- **`postSwitch`**: Executed after `gwtswitch` switches to a worktree
+- **`postRemove`**: Executed after `gwtremove` removes a worktree
+
+### Variable Substitution
+
+Hooks support the following variables:
+- `${branchName}`: The name of the branch
+- `${worktreePath}`: The full path to the worktree directory
+
+### Example Configuration
+
+```yaml
+hooks:
+  postAdd:
+    - "echo 'Created worktree for ${branchName} at ${worktreePath}'"
+    - "npm install"
+    - "npm run init"
+  postSwitch:
+    - "echo 'Switched to branch ${branchName}'"
+  postRemove:
+    - "echo 'Removed worktree for branch ${branchName}'"
+  postInit:
+    - "echo 'Initialized git worktree project'"
+```
+
+### Hook Behavior
+
+- Hooks are executed in the worktree directory (for postAdd/postSwitch) or project root (for postRemove/postInit)
+- Lines starting with `#` are treated as comments and skipped
+- Failed hooks show warnings but don't stop execution
+- Hooks execute sequentially in the order defined
+
 ## Current Implementation
 
 ### Implemented Features
