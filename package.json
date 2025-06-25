@@ -17,11 +17,14 @@
     "test": "pnpx tsx ./src/test-worktrees.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.4",
-    "@types/node": "24.0.3",
+    "@biomejs/biome": "2.0.5",
+    "@types/node": "24.0.4",
     "tsx": "4.20.3",
     "typescript": "5.8.3",
-    "zx": "8.5.5"
+    "zx": "8.6.0"
   },
-  "packageManager": "pnpm@10.12.2"
+  "packageManager": "pnpm@10.12.3",
+  "dependencies": {
+    "yaml": "^2.8.0"
+  }
 }

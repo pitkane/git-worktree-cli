@@ -142,3 +142,6 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Git worktree configuration
+git-worktree-config.yaml

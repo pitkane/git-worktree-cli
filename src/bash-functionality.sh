@@ -9,3 +9,7 @@ function gwtinit() {
 	
 	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-init.ts" "$1"
 }
+
+function gwtlist() {
+	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-list.ts" "$@"
+}
