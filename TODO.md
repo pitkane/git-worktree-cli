@@ -26,6 +26,21 @@
   - Safety checks to prevent removing main/bare repository
   - Automatic navigation to project root when removing current worktree
   - Clear confirmation messages and error handling
+  - Also removes associated git branches (except main branches)
+- [x] Add tab completion for gwtremove command
+  - Shows available worktree branches for removal
+  - Filters completions based on current input
+  - Displays helpful messages when no completions available
+- [x] Comprehensive test suite
+  - 15 integration tests covering all major functionality
+  - Tests both bash function wrappers and direct TypeScript calls
+  - Tests error handling and edge cases
+  - Tests tab completion functionality
+- [x] Complete documentation
+  - Updated CLAUDE.md with full feature documentation
+  - Comprehensive README.md explaining git worktrees concept
+  - Installation instructions and workflow examples
+  - Commands reference and benefits overview
 
 ## Pending
 - [ ] Add Bitbucket PR search functionality for branches
@@ -41,7 +56,7 @@
 - [ ] Add filtering options to gwtlist (by branch pattern, age, etc.)
 - [ ] Add colorized output for better readability
 - [ ] Show last commit date/author for each worktree
-- [ ] Add ability to switch between worktrees quickly
+- [x] Add ability to switch between worktrees quickly (completed via gwtswitch)
 - [ ] Add cleanup command for stale worktrees
 - [ ] Use git-worktree-config.yaml for additional features:
   - Store worktree metadata (creation date, last accessed, etc.)
