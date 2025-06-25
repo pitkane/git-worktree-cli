@@ -41,6 +41,15 @@
   - Comprehensive README.md explaining git worktrees concept
   - Installation instructions and workflow examples
   - Commands reference and benefits overview
+- [x] Implement comprehensive hooks system
+  - Four hook types: postInit, postAdd, postSwitch, postRemove
+  - Variable substitution support for ${branchName} and ${worktreePath}
+  - Real-time output streaming using execSync with stdio: 'inherit'
+  - Comment-based configuration (all hooks disabled by default)
+  - Smart comment detection (lines starting with # are skipped)
+  - Proper error handling with warnings that don't stop execution
+  - Context-aware execution (hooks run in appropriate directories)
+  - Configuration auto-generation with helpful examples in git-worktree-config.yaml
 
 ## Pending
 - [ ] Add Bitbucket PR search functionality for branches

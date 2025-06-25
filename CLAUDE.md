@@ -60,7 +60,25 @@ Hooks support the following variables:
 - `${branchName}`: The name of the branch
 - `${worktreePath}`: The full path to the worktree directory
 
-### Example Configuration
+### Default Configuration
+
+When `gwtinit` creates a new project, it generates a `git-worktree-config.yaml` with all hooks **commented out by default**:
+
+```yaml
+hooks:
+  postAdd:
+    - "# npm install"
+  postSwitch:
+    - "# echo 'Switched to branch ${branchName}'"
+  postRemove:
+    - "# echo 'Removed worktree for branch ${branchName}'"
+  postInit:
+    - "# echo 'Initialized git worktree project'"
+```
+
+### Active Configuration Example
+
+To enable hooks, simply remove the `#` comments:
 
 ```yaml
 hooks:
@@ -78,10 +96,35 @@ hooks:
 
 ### Hook Behavior
 
-- Hooks are executed in the worktree directory (for postAdd/postSwitch) or project root (for postRemove/postInit)
-- Lines starting with `#` are treated as comments and skipped
-- Failed hooks show warnings but don't stop execution
-- Hooks execute sequentially in the order defined
+- **Real-time output**: Commands stream output live using `execSync` with `stdio: 'inherit'`
+- **Execution context**: 
+  - `postAdd`/`postSwitch`: Execute in the worktree directory
+  - `postRemove`/`postInit`: Execute in the project root directory
+- **Comment handling**: Lines starting with `#` are automatically skipped
+- **Error handling**: Failed hooks show warnings but don't stop execution
+- **Sequential execution**: Hooks run in the order they're defined
+- **Environment**: Hooks inherit the current environment with `FORCE_COLOR: '1'` for colored output
+
+### Common Hook Patterns
+
+```yaml
+hooks:
+  postAdd:
+    - "npm install"                    # Install dependencies
+    - "npm run build"                  # Build project
+    - "code ."                         # Open in VS Code
+  postSwitch:
+    - "git status"                     # Show current status
+  postRemove:
+    - "echo 'Cleaned up ${branchName}'" # Log cleanup
+```
+
+### Troubleshooting Hooks
+
+- **Hook not executing**: Check if the line starts with `#` (commented out)
+- **No output visible**: Hooks use real-time streaming - output should appear immediately
+- **Hook fails**: Check the command syntax and file permissions
+- **Variable not substituted**: Ensure correct syntax: `${branchName}` or `${worktreePath}`
 
 ## Current Implementation
 

@@ -29,7 +29,7 @@ Each directory is a separate working tree of the same repository. No more stashi
 
 1. **Clone this repository:**
    ```bash
-   git clone https://github.com/mikkohaapala/git-worktree-scripts.git ~/.git-worktree-scripts
+   git clone git@github.com:pitkane/git-worktree-scripts.git ~/.git-worktree-scripts
    cd ~/.git-worktree-scripts
    ```
 
@@ -131,6 +131,57 @@ gwtremove hotfix/payment-bug
 
 All commands include tab completion and helpful error messages.
 
+## Hooks & Automation
+
+Git worktree scripts support **hooks** - custom commands that run automatically after worktree operations. Perfect for automating setup tasks like installing dependencies or running initialization scripts.
+
+### Quick Setup
+```bash
+# After gwtinit, edit git-worktree-config.yaml
+hooks:
+  postAdd:
+    - "npm install"      # Auto-install deps in new worktrees
+    - "npm run init"     # Run your custom setup script
+```
+
+### Example Workflow with Hooks
+```bash
+# Initialize project (creates config with hook examples)
+gwtinit git@github.com:company/web-app.git
+
+# Edit git-worktree-config.yaml to enable hooks:
+# hooks:
+#   postAdd:
+#     - "npm install"    # Remove # to enable
+
+# Create new worktree - hooks run automatically!
+gwtadd feature/shopping-cart
+# This will:
+# 1. Create the worktree  
+# 2. Run "npm install" automatically
+# 3. Show real-time output from npm
+# 4. Switch to the new directory
+
+# Continue with your work - dependencies already installed!
+```
+
+### Available Hook Types
+- **`postInit`**: After creating a new project
+- **`postAdd`**: After creating a new worktree (perfect for setup)
+- **`postSwitch`**: After switching to a worktree  
+- **`postRemove`**: After removing a worktree (great for cleanup)
+
+### Variable Support
+Use `${branchName}` and `${worktreePath}` in your hooks:
+```yaml
+hooks:
+  postAdd:
+    - "echo 'Created ${branchName} at ${worktreePath}'"
+    - "npm install"
+```
+
+By default, all hooks are commented out (disabled) - uncomment the ones you want to use.
+
 ## Benefits
 
 - **🚀 No Context Switching**: Each branch keeps its own working directory
@@ -138,6 +189,8 @@ All commands include tab completion and helpful error messages.
 - **🛡️ Safe Experimentation**: Isolated working directories prevent conflicts
 - **⚡ Parallel Development**: Work on multiple features simultaneously
 - **🧹 Easy Cleanup**: Remove completed work with one command
+- **🪝 Smart Automation**: Hooks automatically run setup/cleanup tasks
+- **📊 Real-time Feedback**: See command output as it executes
 
 ## Requirements
 
