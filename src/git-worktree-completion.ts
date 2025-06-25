@@ -14,35 +14,81 @@ interface Worktree {
 	bare?: boolean;
 }
 
-async function findWorktrees(rootPath: string): Promise<Worktree[]> {
-	const worktrees: Worktree[] = [];
+async function findWorktreesFromExisting(rootPath: string): Promise<Worktree[]> {
+	// Find any existing worktree to use for git commands
 	const entries = await readdir(rootPath, { withFileTypes: true });
+	let foundWorktree: string | null = null;
 	
+	// First try direct subdirectories
 	for (const entry of entries) {
 		if (entry.isDirectory()) {
 			const dirPath = join(rootPath, entry.name);
 			const gitPath = join(dirPath, ".git");
-			
 			if (existsSync(gitPath)) {
+				foundWorktree = dirPath;
+				break;
+			}
+		}
+	}
+	
+	// If not found in direct subdirectories, try one level deeper
+	if (!foundWorktree) {
+		for (const entry of entries) {
+			if (entry.isDirectory()) {
+				const subDir = join(rootPath, entry.name);
 				try {
-					// Get branch info from this worktree
-					const branch = await $`cd ${dirPath} && git branch --show-current`.text();
-					const head = await $`cd ${dirPath} && git rev-parse HEAD`.text();
-					
-					worktrees.push({
-						path: dirPath,
-						branch: branch.trim() ? `refs/heads/${branch.trim()}` : "",
-						HEAD: head.trim(),
-						bare: false
-					});
+					const subEntries = await readdir(subDir, { withFileTypes: true });
+					for (const subEntry of subEntries) {
+						if (subEntry.isDirectory()) {
+							const dirPath = join(subDir, subEntry.name);
+							const gitPath = join(dirPath, ".git");
+							if (existsSync(gitPath)) {
+								foundWorktree = dirPath;
+								break;
+							}
+						}
+					}
+					if (foundWorktree) break;
 				} catch {
-					// Skip if we can't get git info
+					// Skip if we can't read subdirectory
 				}
 			}
 		}
 	}
 	
-	return worktrees;
+	if (!foundWorktree) {
+		return [];
+	}
+	
+	// Use the found worktree to get the complete list via git
+	try {
+		const output = await $`cd ${foundWorktree} && git worktree list --porcelain`.text();
+		const worktrees: Worktree[] = [];
+		let currentWorktree: Partial<Worktree> = {};
+		
+		for (const line of output.split('\n')) {
+			if (line.startsWith('worktree ')) {
+				if (currentWorktree.path) {
+					worktrees.push(currentWorktree as Worktree);
+				}
+				currentWorktree = { path: line.slice(9) };
+			} else if (line.startsWith('HEAD ')) {
+				currentWorktree.HEAD = line.slice(5);
+			} else if (line.startsWith('branch ')) {
+				currentWorktree.branch = line.slice(7);
+			} else if (line === 'bare') {
+				currentWorktree.bare = true;
+			}
+		}
+		
+		if (currentWorktree.path) {
+			worktrees.push(currentWorktree as Worktree);
+		}
+		
+		return worktrees;
+	} catch {
+		return [];
+	}
 }
 
 async function getAllWorktrees(): Promise<Worktree[]> {
@@ -77,7 +123,7 @@ async function getAllWorktrees(): Promise<Worktree[]> {
 			const configPath = join(process.cwd(), "git-worktree-config.yaml");
 			if (existsSync(configPath)) {
 				// We're in a project root, scan for worktrees
-				worktrees = await findWorktrees(process.cwd());
+				worktrees = await findWorktreesFromExisting(process.cwd());
 			}
 		}
 		
