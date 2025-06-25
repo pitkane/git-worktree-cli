@@ -90,7 +90,7 @@ async function gwtadd(folderName: string) {
 	}
 
 	try {
-		const branchName = basename(folderName);
+		const branchName = folderName;
 		
 		// Determine git root and target path
 		let gitRoot: string | null = null;
