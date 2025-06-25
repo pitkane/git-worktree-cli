@@ -1,9 +1,17 @@
 #!/usr/bin/env tsx
 
-import { basename } from "node:path";
+import { basename, join } from "node:path";
+import { writeFile } from "node:fs/promises";
 import { $ } from "zx";
+import * as yaml from "yaml";
 
 $.verbose = false;
+
+interface GitWorktreeConfig {
+	repositoryUrl: string;
+	mainBranch: string;
+	createdAt: string;
+}
 
 async function gwtinit(repoUrl: string) {
 	if (!repoUrl) {
@@ -14,6 +22,7 @@ async function gwtinit(repoUrl: string) {
 
 	try {
 		const repoName = basename(repoUrl, ".git");
+		const projectRoot = process.cwd();
 		
 		console.log(`Cloning ${repoUrl}...`);
 		await $`git clone ${repoUrl} ${repoName}`;
@@ -25,8 +34,20 @@ async function gwtinit(repoUrl: string) {
 		
 		await $`mv ${repoName} ${finalDirName}`;
 		
+		// Create configuration file in project root
+		const config: GitWorktreeConfig = {
+			repositoryUrl: repoUrl,
+			mainBranch: branchName,
+			createdAt: new Date().toISOString()
+		};
+		
+		const configPath = join(projectRoot, "git-worktree-config.yaml");
+		const configContent = yaml.stringify(config);
+		await writeFile(configPath, configContent, "utf-8");
+		
 		console.log(`✓ Repository cloned to: ${finalDirName}`);
 		console.log(`✓ Default branch: ${branchName}`);
+		console.log(`✓ Config saved to: ${configPath}`);
 		
 	} catch (error) {
 		console.error("Error:", error instanceof Error ? error.message : String(error));
