@@ -14,12 +14,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Initialize Script
 - **Install bash functions**: `pnpm initialize` - Adds git worktree helper functions to ~/.zshrc
 
-### Git Worktree Scripts
+### Git Worktree Scripts  
 - **git-worktree-init**: `pnpm script:git-worktree-init` - Initialize a new worktree from a repository URL
-- **git-worktree-add**: `pnpm script:git-worktree-add` (not implemented)
-- **git-worktree-remove**: `pnpm script:git-worktree-remove` (not implemented)
-- **git-worktree-completion**: `pnpm script:git-worktree-completion` (not implemented)
+- **git-worktree-add**: `pnpm script:git-worktree-add` - Create new worktrees from branch names
+- **git-worktree-switch**: `pnpm script:git-worktree-switch` - Switch between existing worktrees
 - **git-worktree-list**: `pnpm script:git-worktree-list` - List all worktrees in a formatted table
+- **git-worktree-completion**: `pnpm script:git-worktree-completion` - Tab completion for worktree commands
+- **git-worktree-remove**: `pnpm script:git-worktree-remove` (not implemented)
 
 ## Architecture
 
@@ -30,7 +31,8 @@ This project provides shell functions for managing git worktrees more efficientl
    - Scripts are meant to be called from shell functions
 
 2. **Shell Functions** (`src/bash-functionality.sh`): Bash/Zsh functions that wrap the TypeScript scripts
-   - Currently implements `gwtinit` function
+   - Implements `gwtinit`, `gwtlist`, `gwtadd`, and `gwtswitch` functions
+   - Includes tab completion for `gwtswitch` and `gwtadd` commands
    - Functions are installed to `~/.zshrc` via the initialize script
 
 3. **Key Dependencies**:
@@ -51,8 +53,21 @@ This project provides shell functions for managing git worktrees more efficientl
 
 2. **`gwtlist`**: Display all worktrees in a formatted table
    - Shows path and branch for each worktree
-   - Relative paths from current directory
+   - Works from both project root and worktree directories
    - Indicates bare repositories
+
+3. **`gwtadd`**: Create new worktrees from branch names
+   - Takes folder name as parameter (supports slashes like `feature/IP-487`)
+   - Automatically branches from main/default branch
+   - Detects existing branches and checks them out instead of creating duplicates
+   - Works from both project root and worktree directories
+   - Automatically navigates to new worktree after creation
+
+4. **`gwtswitch`**: Switch between existing worktrees
+   - Quick navigation between worktree directories
+   - Shows available worktrees when no branch specified
+   - Tab completion for available worktree branches
+   - Helpful error messages and suggestions
 
 ## TODO Tracking
 

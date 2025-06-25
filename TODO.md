@@ -5,6 +5,21 @@
 - [x] Add git-worktree-config.yaml creation to gwtinit command
   - Stores repository URL, main branch, and creation timestamp
   - Helps with future Bitbucket PR integration
+- [x] Implement gwtadd command to create new worktrees
+  - Works from project root or worktree directory
+  - Supports folder names with slashes (e.g., feature/IP-487-replace-icon-buttons)
+  - Automatically branches from main/default branch
+  - Detects existing branches and checks them out instead of creating new ones
+  - Automatically navigates to new worktree after creation
+- [x] Implement gwtswitch command
+  - Quick switching between existing worktrees
+  - Navigate to selected worktree directory
+  - Shows available worktrees when no branch specified
+  - Helpful error messages when branch not found
+- [x] Add tab completion for gwtswitch command
+  - Shows available local worktrees for completion
+  - Displays helpful message when no worktrees found
+  - Filters completions based on current input
 
 ## Pending
 - [ ] Add Bitbucket PR search functionality for branches
@@ -12,6 +27,9 @@
   - Display PR status inline with worktree list
   - Add ability to open PR in browser
   - Use repository URL from git-worktree-config.yaml
+- [ ] Add tab completion for gwtadd command
+  - Show available remote branches for checkout
+  - Auto-complete branch names
 
 ## Future Enhancements
 - [ ] Add filtering options to gwtlist (by branch pattern, age, etc.)
