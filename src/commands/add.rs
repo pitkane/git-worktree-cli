@@ -43,6 +43,7 @@ pub fn run(branch_name: &str) -> Result<()> {
         println!("{}", format!("Creating new branch '{}' from 'origin/{}'...", branch_name, main_branch).cyan());
         git::execute_streaming(&[
             "worktree", "add", 
+            "--no-track",
             target_path.to_str().unwrap(), 
             "-b", branch_name, 
             &format!("origin/{}", main_branch)
