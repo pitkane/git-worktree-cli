@@ -45,7 +45,24 @@ function gwtadd() {
 }
 
 function gwtswitch() {
-	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-switch.ts" "$1"
+	local result
+	result=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-switch.ts" "$1")
+	local exit_code=$?
+	
+	# Print the output from the script
+	echo "$result"
+	
+	if [ $exit_code -eq 0 ]; then
+		# Extract the target path from the output
+		local target_path
+		target_path=$(echo "$result" | grep "Switching to worktree:" | sed 's/Switching to worktree: //')
+		
+		if [ -n "$target_path" ] && [ -d "$target_path" ]; then
+			cd "$target_path"
+		fi
+	fi
+	
+	return $exit_code
 }
 
 function gwtremove() {

@@ -182,8 +182,6 @@ async function gwtswitch(branchName?: string) {
 		
 		// Switch to the target worktree
 		console.log(`Switching to worktree: ${targetWorktree.path}`);
-		process.chdir(targetWorktree.path);
-		console.log(`✓ Now in: ${process.cwd()}`);
 		
 	} catch (error) {
 		console.error("Error:", error instanceof Error ? error.message : String(error));
