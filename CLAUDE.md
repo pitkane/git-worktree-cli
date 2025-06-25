@@ -69,6 +69,12 @@ This project provides shell functions for managing git worktrees more efficientl
    - Tab completion for available worktree branches
    - Helpful error messages and suggestions
 
+5. **`gwtremove`**: Remove worktrees
+   - Remove current worktree when no parameter given
+   - Remove specified worktree when parameter provided
+   - Safety checks to prevent removing main/bare repository
+   - Automatic navigation to project root when removing current worktree
+
 ## TODO Tracking
 
 Project TODOs are maintained in `TODO.md` for persistence across Claude Code sessions. This includes:

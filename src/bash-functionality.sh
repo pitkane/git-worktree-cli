@@ -28,6 +28,10 @@ function gwtswitch() {
 	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-switch.ts" "$1"
 }
 
+function gwtremove() {
+	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-remove.ts" "$1"
+}
+
 # Tab completion for gwtswitch
 function _gwtswitch_completion() {
 	local current_word="${COMP_WORDS[COMP_CWORD]}"
