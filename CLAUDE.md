@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Type checking**: `pnpm typecheck`
 - **Linting**: `pnpm lint`
 - **Fix linting issues**: `pnpm lint:fix`
-- **Run tests**: `pnpm test`
+- **Run tests**: `pnpm test` - Comprehensive integration tests for all worktree commands
 
 ### Initialize Script
 - **Install bash functions**: `pnpm initialize` - Adds git worktree helper functions to ~/.zshrc

@@ -2,6 +2,7 @@
 
 import { basename, join } from "node:path";
 import { writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { $ } from "zx";
 import * as yaml from "yaml";
 
@@ -24,6 +25,11 @@ async function gwtinit(repoUrl: string) {
 		const repoName = basename(repoUrl, ".git");
 		const projectRoot = process.cwd();
 		
+		// Remove existing clone directory if it exists
+		if (existsSync(repoName)) {
+			await $`rm -rf ${repoName}`;
+		}
+		
 		console.log(`Cloning ${repoUrl}...`);
 		await $`git clone ${repoUrl} ${repoName}`;
 		
@@ -31,6 +37,11 @@ async function gwtinit(repoUrl: string) {
 		const branchName = defaultBranch.trim();
 		
 		const finalDirName = branchName;
+		
+		// Remove existing directory if it exists
+		if (existsSync(finalDirName)) {
+			await $`rm -rf ${finalDirName}`;
+		}
 		
 		await $`mv ${repoName} ${finalDirName}`;
 		
