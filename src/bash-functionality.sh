@@ -46,7 +46,7 @@ function gwtadd() {
 
 function gwtswitch() {
 	local result
-	result=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-switch.ts" "$1")
+	result=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-switch.ts" "$@")
 	local exit_code=$?
 	
 	# Print the output from the script

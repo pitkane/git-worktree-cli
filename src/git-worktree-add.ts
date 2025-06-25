@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { basename, join } from "node:path";
+import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { $ } from "zx";
@@ -109,8 +109,21 @@ async function gwtadd(folderName: string) {
 		gitRoot = await findGitRoot();
 		
 		if (gitRoot) {
-			// We're in a git repository, create worktree relative to git root
-			targetPath = join(gitRoot, "..", folderName);
+			// We're in a git repository, find the project root (where git-worktree-config.yaml is)
+			let projectRoot = gitRoot;
+			let currentPath = gitRoot;
+			
+			// Walk up to find the project root with git-worktree-config.yaml
+			while (currentPath !== "/" && currentPath !== ".") {
+				if (existsSync(join(currentPath, "git-worktree-config.yaml"))) {
+					projectRoot = currentPath;
+					break;
+				}
+				currentPath = join(currentPath, "..");
+			}
+			
+			// Create worktree relative to project root
+			targetPath = join(projectRoot, folderName);
 			gitWorkingDir = gitRoot;
 		} else {
 			// We're in project root, look for existing worktree to use as git repository
