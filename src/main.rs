@@ -16,9 +16,14 @@ use commands::{init, add, list, remove};
     version,
     author,
     about = "Git worktree management tool",
-    long_about = "A tool for managing git worktrees efficiently with hooks and configuration support"
+    long_about = "A tool for managing git worktrees efficiently with hooks and configuration support",
+    disable_version_flag = true
 )]
 struct Cli {
+    /// Print version
+    #[arg(short = 'v', long = "version", action = clap::ArgAction::Version)]
+    version: (),
+    
     #[command(subcommand)]
     command: Commands,
 }
@@ -219,7 +224,7 @@ fn install_zsh_completions() -> Result<()> {
     let mut zshrc_content = fs::read_to_string(&zshrc_path)?;
     
     // Check if completions are already installed
-    if zshrc_content.contains("gwt-completions.zsh") || zshrc_content.contains("GWT completions") {
+    if zshrc_content.contains("gwt-completions.zsh") || zshrc_content.contains("GWT completions") || zshrc_content.contains("gwt completions") {
         println!("Completions already appear to be installed in ~/.zshrc");
         println!("Would you like to reinstall? This will update the configuration.");
         // For now, we'll just update
@@ -229,7 +234,7 @@ fn install_zsh_completions() -> Result<()> {
     // Prepare the completion setup code
     let completion_setup = format!(
         r#"
-# GWT completions
+# gwt completions
 if [[ -f {} ]]; then
     fpath=({} $fpath)
     autoload -Uz compinit && compinit
@@ -246,7 +251,7 @@ fi"#,
     let mut skip_until_fi = false;
     
     for line in lines {
-        if line.contains("GWT completions") || line.contains("gwt-completions.zsh") {
+        if line.contains("GWT completions") || line.contains("gwt completions") || line.contains("gwt-completions.zsh") {
             skip_until_fi = true;
             continue;
         }
