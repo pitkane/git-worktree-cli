@@ -70,10 +70,39 @@ _gwt() {
                         && ret=0
                     ;;
                 completions)
+                    local -a subcommands
+                    subcommands=(
+                        'generate:Generate completions to stdout'
+                        'install:Install completions for your shell'
+                    )
+                    
                     _arguments "${_arguments_options[@]}" : \
                         '(-h --help)'{-h,--help}'[Print help]' \
-                        '1:shell:(bash zsh fish)' \
+                        '1: :->subcommand' \
+                        '*::arg:->args' \
                         && ret=0
+                    
+                    case $state in
+                        subcommand)
+                            _describe 'completions subcommand' subcommands
+                            ;;
+                        args)
+                            case $words[1] in
+                                generate)
+                                    _arguments "${_arguments_options[@]}" : \
+                                        '(-h --help)'{-h,--help}'[Print help]' \
+                                        '1:shell:(bash zsh fish)' \
+                                        && ret=0
+                                    ;;
+                                install)
+                                    _arguments "${_arguments_options[@]}" : \
+                                        '(-h --help)'{-h,--help}'[Print help]' \
+                                        '::shell:(bash zsh fish)' \
+                                        && ret=0
+                                    ;;
+                            esac
+                            ;;
+                    esac
                     ;;
                 *)
                     _message "unknown gwt command: $words[1]"

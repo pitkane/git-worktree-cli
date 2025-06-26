@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::fs;
 use colored::Colorize;
 use tabled::{Table, Tabled};

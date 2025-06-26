@@ -16,7 +16,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Add worktree**: `gwt add <branch-name>` - Create new worktrees from branch names  
 - **List worktrees**: `gwt list` - List all worktrees in a formatted table
 - **Remove worktree**: `gwt remove [branch-name]` - Remove existing worktrees with confirmation
-- **Generate completions**: `gwt completions <shell>` - Generate shell completion scripts
+- **Check completions**: `gwt completions` - Check if shell completions are installed
+- **Install completions**: `gwt completions install [shell]` - Automatically install completions (defaults to detected shell)
+- **Generate completions**: `gwt completions generate <shell>` - Generate shell completion scripts to stdout
 - **Tab completion**: Dynamic branch name completion for add/remove commands (see completions/SETUP.md)
 
 ### Legacy TypeScript Version

@@ -112,7 +112,7 @@ fn determine_paths(branch_name: &str) -> Result<(PathBuf, PathBuf, PathBuf)> {
         Ok((git_working_dir, target_path, project_root))
     } else {
         // No config found, check if we're in a git repository
-        if let Some(git_root) = git::get_git_root()? {
+        if let Some(_git_root) = git::get_git_root()? {
             bail!("Found git repository but no git-worktree-config.yaml. This doesn't appear to be a worktree project.");
         } else {
             bail!("Not in a git repository or project root with git-worktree-config.yaml");
