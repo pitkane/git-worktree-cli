@@ -33,8 +33,8 @@ Each directory is a separate working tree of the same repository. No more stashi
 
 1. **Clone this repository:**
    ```bash
-   git clone git@github.com:pitkane/git-worktree-scripts.git ~/.git-worktree-scripts
-   cd ~/.git-worktree-scripts
+   git clone git@github.com:pitkane/git-worktree-cli.git ~/.git-worktree-cli
+   cd ~/.git-worktree-cli
    ```
 
 2. **Build the binary:**
@@ -47,7 +47,7 @@ Each directory is a separate working tree of the same repository. No more stashi
    # Copy to your PATH
    sudo cp target/release/gwt /usr/local/bin/
    # Or add to your shell config
-   echo 'export PATH="$HOME/.git-worktree-scripts/target/release:$PATH"' >> ~/.zshrc
+   echo 'export PATH="$HOME/.git-worktree-cli/target/release:$PATH"' >> ~/.zshrc
    source ~/.zshrc
    ```
 
@@ -288,7 +288,7 @@ Make sure the binary is in your PATH:
 ```bash
 which gwt
 # If not found, add to PATH:
-export PATH="$HOME/.git-worktree-scripts/target/release:$PATH"
+export PATH="$HOME/.git-worktree-cli/target/release:$PATH"
 ```
 
 ## Contributing
