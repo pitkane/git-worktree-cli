@@ -1,4 +1,4 @@
-# Git Worktree Manager (gwt) TODO
+# Git Worktree CLI (gwt) TODO
 
 ## ✅ Completed
 
