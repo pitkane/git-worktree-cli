@@ -2,7 +2,7 @@ use anyhow::{Result, bail};
 use std::path::PathBuf;
 use std::fs;
 use colored::Colorize;
-use tabled::{Table, Tabled};
+use tabled::{Table, Tabled, settings::Style};
 
 use crate::git;
 
@@ -56,7 +56,8 @@ pub fn run() -> Result<()> {
         .collect();
     
     // Create and display the table
-    let table = Table::new(display_worktrees);
+    let mut table = Table::new(display_worktrees);
+    table.with(Style::sharp());
     println!("{}", table);
     
     Ok(())

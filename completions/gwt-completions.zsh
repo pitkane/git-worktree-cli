@@ -4,13 +4,18 @@
 _gwt_branches() {
     local branches
     if command -v gwt >/dev/null 2>&1; then
-        # Get branches from worktrees
-        branches=(${(f)"$(gwt list 2>/dev/null | tail -n +4 | awk '{print $1}')"})
+        # Get existing worktree branches
+        local existing_branches=(${(f)"$(gwt list 2>/dev/null | grep -E '^\|' | grep -v 'BRANCH' | awk -F'|' '{print $3}' | tr -d ' ')"})
         
-        # Also get remote branches that don't have worktrees yet
+        # Get remote branches that don't have worktrees yet
         if [[ -d .git ]] || git rev-parse --git-dir > /dev/null 2>&1; then
             local remote_branches=(${(f)"$(git branch -r 2>/dev/null | grep -v HEAD | sed 's/.*origin\///' | grep -v -E '^\s*$')"})
-            branches+=($remote_branches)
+            # Filter out branches that already have worktrees
+            for remote_branch in $remote_branches; do
+                if [[ ! " ${existing_branches[@]} " =~ " ${remote_branch} " ]]; then
+                    branches+=($remote_branch)
+                fi
+            done
         fi
         
         # Remove duplicates and sort
@@ -24,7 +29,7 @@ _gwt_branches() {
 _gwt_removable_worktrees() {
     local worktrees
     if command -v gwt >/dev/null 2>&1; then
-        worktrees=(${(f)"$(gwt list 2>/dev/null | tail -n +4 | awk '{print $1}')"})
+        worktrees=(${(f)"$(gwt list 2>/dev/null | grep -E '^\|' | grep -v 'BRANCH' | awk -F'|' '{print $3}' | tr -d ' ')"})
         _describe 'worktree' worktrees
     fi
 }
