@@ -1,4 +1,4 @@
-# Git Worktree Manager (gwt)
+# Git Worktree CLI (gwt)
 
 🌿 **Enhanced Git Worktree Management with Rust** 🌿
 
