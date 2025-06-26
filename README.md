@@ -56,14 +56,21 @@ Each directory is a separate working tree of the same repository. No more stashi
    # Check if completions are installed
    gwt completions
    
-   # Automatically install completions
+   # Automatically install completions for your shell
    gwt completions install
    
-   # Or manually generate for your shell
-   gwt completions generate zsh > ~/.zsh/completions/_gwt
-   gwt completions generate bash > ~/.bash_completion.d/gwt
-   gwt completions generate fish > ~/.config/fish/completions/gwt.fish
+   # Or install for a specific shell
+   gwt completions install bash
+   gwt completions install zsh
+   gwt completions install fish
+   gwt completions install powershell
+   gwt completions install elvish
+   
+   # Generate completions to stdout (for manual installation)
+   gwt completions generate <shell>
    ```
+   
+   **Note**: Completions are embedded in the binary, so they're always available!
 
 ### Option 2: Direct Binary Download (Coming Soon)
 Pre-built binaries will be available for:
@@ -174,13 +181,15 @@ gwt remove hotfix/payment-bug
 | `gwt add <branch>` | Create new worktree for branch | `gwt add feature/new-ui` | 🚧 **Partial** |
 | `gwt remove [branch]` | Remove worktree (current if no args) | `gwt remove old-feature` | 🚧 **Partial** |
 | `gwt completions` | Check completion status | `gwt completions` | ✅ **Working** |
-| `gwt completions install` | Auto-install completions | `gwt completions install` | ✅ **Working** |
+| `gwt completions install [shell]` | Auto-install completions | `gwt completions install` | ✅ **Working** |
 | `gwt completions generate <shell>` | Generate completions | `gwt completions generate zsh` | ✅ **Working** |
 
 **New in Rust version:**
 - ✅ **Real-time streaming output** - See git clone progress live!
 - ✅ **Single binary** - No Node.js dependency
-- ✅ **Smart completions** - Auto-install and branch name completion
+- ✅ **Embedded completions** - Completions built into the binary at compile time
+- ✅ **Multi-shell support** - Bash, Zsh, Fish, PowerShell, and Elvish
+- ✅ **Smart completions** - Auto-detect shell and install with one command
 - ✅ **Better performance** - Compiled Rust vs interpreted TypeScript
 - ✅ **Sharp table output** - Clean, modern table formatting
 
@@ -276,12 +285,20 @@ cargo run -- <command>
 # Check if completions are installed
 gwt completions
 
-# Auto-install completions
+# Auto-install completions for your detected shell
 gwt completions install
+
+# Or specify a shell explicitly
+gwt completions install zsh
+
+# For manual installation, generate completions
+gwt completions generate zsh > ~/.local/share/zsh/site-functions/_gwt
 
 # Reload your shell
 source ~/.zshrc  # or exec zsh
 ```
+
+**Supported shells**: bash, zsh, fish, powershell, elvish
 
 ### Command not found?
 Make sure the binary is in your PATH:
