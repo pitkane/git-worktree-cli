@@ -7,7 +7,7 @@ use crate::config::GitWorktreeConfig;
 use crate::git;
 use crate::hooks;
 
-pub fn run(branch_name: &str) -> Result<()> {
+pub fn run(branch_name: &str, print_path: bool) -> Result<()> {
     if branch_name.is_empty() {
         bail!("Error: Branch name is required\nUsage: gwt add <branch-name>");
     }
@@ -15,7 +15,9 @@ pub fn run(branch_name: &str) -> Result<()> {
     // Determine git root and target path
     let (git_working_dir, target_path, project_root) = determine_paths(branch_name)?;
     
-    println!("{}", format!("Preparing worktree (new branch '{}')", branch_name).cyan());
+    if !print_path {
+        println!("{}", format!("Preparing worktree (new branch '{}')", branch_name).cyan());
+    }
 
     // Get main branch from config
     let main_branch = get_main_branch(&project_root)?;
@@ -25,14 +27,18 @@ pub fn run(branch_name: &str) -> Result<()> {
     
     // Create worktree based on branch existence
     if local_exists {
-        println!("{}", format!("Branch '{}' exists locally, checking out existing branch...", branch_name).yellow());
+        if !print_path {
+            println!("{}", format!("Branch '{}' exists locally, checking out existing branch...", branch_name).yellow());
+        }
         git::execute_streaming(&[
             "worktree", "add", 
             target_path.to_str().unwrap(), 
             branch_name
         ], Some(&git_working_dir))?;
     } else if remote_exists {
-        println!("{}", format!("Branch '{}' exists remotely, checking out remote branch...", branch_name).yellow());
+        if !print_path {
+            println!("{}", format!("Branch '{}' exists remotely, checking out remote branch...", branch_name).yellow());
+        }
         git::execute_streaming(&[
             "worktree", "add", 
             target_path.to_str().unwrap(), 
@@ -40,7 +46,9 @@ pub fn run(branch_name: &str) -> Result<()> {
             &format!("origin/{}", branch_name)
         ], Some(&git_working_dir))?;
     } else {
-        println!("{}", format!("Creating new branch '{}' from 'origin/{}'...", branch_name, main_branch).cyan());
+        if !print_path {
+            println!("{}", format!("Creating new branch '{}' from 'origin/{}'...", branch_name, main_branch).cyan());
+        }
         git::execute_streaming(&[
             "worktree", "add", 
             "--no-track",
@@ -50,19 +58,25 @@ pub fn run(branch_name: &str) -> Result<()> {
         ], Some(&git_working_dir))?;
     }
 
-    // Success messages
-    println!("{}", format!("✓ Worktree created at: {}", target_path.display()).green());
-    println!("{}", format!("✓ Branch: {}", branch_name).green());
-
-    // Execute post-add hooks
-    hooks::execute_hooks(
-        "postAdd",
-        &target_path,
-        &[
-            ("branchName", branch_name),
-            ("worktreePath", target_path.to_str().unwrap()),
-        ]
-    )?;
+    // Handle output based on print_path flag
+    if print_path {
+        // For shell integration - print only the path
+        println!("{}", target_path.display());
+    } else {
+        // Normal success messages
+        println!("{}", format!("✓ Worktree created at: {}", target_path.display()).green());
+        println!("{}", format!("✓ Branch: {}", branch_name).green());
+        
+        // Execute post-add hooks only in normal mode
+        hooks::execute_hooks(
+            "postAdd",
+            &target_path,
+            &[
+                ("branchName", branch_name),
+                ("worktreePath", target_path.to_str().unwrap()),
+            ]
+        )?;
+    }
 
     Ok(())
 }

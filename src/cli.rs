@@ -31,6 +31,9 @@ pub enum CompletionAction {
         /// Shell to install completions for (auto-detected if not specified)
         #[arg(value_enum)]
         shell: Option<clap_complete::Shell>,
+        /// Also install shell integration for auto-navigation with gwt add
+        #[arg(long)]
+        with_integration: bool,
     },
 }
 
@@ -46,6 +49,9 @@ pub enum Commands {
     Add {
         /// Branch name (can include slashes like feature/branch-name)
         branch_name: String,
+        /// Print the worktree path instead of changing to it (for shell integration)
+        #[arg(long)]
+        print_path: bool,
     },
 
     /// List all worktrees in the current project
@@ -62,5 +68,12 @@ pub enum Commands {
         /// Action to perform (defaults to generate)
         #[command(subcommand)]
         action: Option<CompletionAction>,
+    },
+    
+    /// Generate shell integration functions for auto-navigation
+    ShellInit {
+        /// Shell to generate integration for
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
     },
 }
