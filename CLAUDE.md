@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to ([Claude Code](https://www.anthropic.com/claude-code)) when working with code in this repository.
 
 ## Commands
 
@@ -10,6 +10,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Run tests**: `cargo test` - Comprehensive unit and integration tests
 - **Type checking**: `cargo check` - Fast compilation check without building binary
 - **Run with cargo**: `cargo run -- <command>` - Run directly with cargo for development
+
+### Testing and Local Development
+When Claude needs to test functionality locally:
+- Use `cargo build` for debug builds or `cargo build --release` for optimized builds
+- Run the binary directly: `./target/release/gwt <command>` or `./target/debug/gwt <command>`
+- Create test repositories in the `test-temp/` directory which is git-ignored
+- Use `gwt init` to create proper worktree projects for testing
+- Clean up test directories after testing with `rm -rf test-temp`
+- Example test workflow:
+  ```bash
+  mkdir test-temp && cd test-temp
+  ../target/release/gwt init https://github.com/octocat/Hello-World.git
+  ../target/release/gwt list
+  cd .. && rm -rf test-temp
+  ```
 
 ### Git Worktree Tool (gwt)
 - **Initialize project**: `gwt init <repository-url>` - Initialize a new worktree project from a repository URL
@@ -135,15 +150,26 @@ hooks:
    - ✅ Creates `git-worktree-config.yaml` with repository metadata
    - ✅ Executes post-init hooks with streaming output
 
+2. **`gwt list`**: Display all worktrees in a formatted table ✅
+   - ✅ Finds worktrees in project directory
+   - ✅ Displays in clean table format with sharp borders
+   - ✅ Shows path, branch name, and HEAD commit
+   - ✅ Works from any subdirectory within project
+
+3. **`gwt completions`**: Enhanced shell completions support ✅
+   - ✅ Check if completions are installed
+   - ✅ Auto-install completions with `gwt completions install`
+   - ✅ Generate completions for any shell with `gwt completions generate <shell>`
+   - ✅ Smart detection of user's shell
+   - ✅ Safe .zshrc modification (removes duplicates)
+   - ✅ Branch name completion for add/remove commands
+
 ### 🔄 Partially Implemented Features
 
-2. **`gwt add`**: Create new worktrees from branch names 🔄
+4. **`gwt add`**: Create new worktrees from branch names 🔄
    - ⚠️ Stub implementation only - needs full functionality
 
-3. **`gwt list`**: Display all worktrees in a formatted table 🔄
-   - ⚠️ Stub implementation only - needs full functionality
-
-4. **`gwt remove`**: Remove worktrees with safety checks 🔄
+5. **`gwt remove`**: Remove worktrees with safety checks 🔄
    - ⚠️ Stub implementation only - needs full functionality
 
 
@@ -151,10 +177,12 @@ hooks:
 
 - **✅ Real-time streaming output**: Git commands show progress in real-time using Rust's native `Command` with `Stdio::inherit()`
 - **✅ Single binary distribution**: No Node.js runtime or shell wrapper functions needed
-- **✅ Built-in shell completions**: Generate completion scripts for bash/zsh/fish with `gwt completions`
+- **✅ Enhanced shell completions**: Auto-install support and smart branch name completion
 - **✅ Better error handling**: Rust's `Result` type provides robust error propagation
 - **✅ Faster execution**: Compiled binary vs interpreted TypeScript
 - **✅ Cross-platform compatibility**: Easy to build for different OS/architectures
+- **✅ Sharp table formatting**: Professional table output using Unicode box-drawing characters
+- **✅ Completion tab fixes**: Fixed parsing logic for branch name completion
 
 ## Test Suite
 
@@ -166,12 +194,9 @@ The project includes comprehensive testing in Rust:
 - **4 unit tests**: Testing config module functionality
 - **Fast execution**: All tests run in ~6 seconds vs 15+ seconds for TypeScript version
 
-## TODO Tracking
+## Project Management
 
-Project TODOs are maintained in `TODO.md` for persistence across Claude Code sessions. This includes:
-- Completed tasks (extensive list of implemented features)
-- Pending features (like Bitbucket PR integration, gwtadd tab completion)
-- Future enhancement ideas (filtering, colors, metadata tracking)
+Project tasks and TODOs are tracked in `TODO.md` for persistence across Claude Code sessions.
 
 ## Code Style
 

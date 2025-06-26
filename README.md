@@ -4,6 +4,8 @@
 
 Stop juggling multiple git clones or constantly switching branches. Git worktrees let you have multiple working directories from the same repository, each checked out to different branches. This Rust-powered tool makes managing them effortless with **real-time streaming output**.
 
+*This project was built with [Claude Code](https://claude.ai/code) using Opus 4 and Sonnet 4 models.*
+
 ## What are Git Worktrees?
 
 Instead of this messy workflow:
@@ -49,16 +51,27 @@ Each directory is a separate working tree of the same repository. No more stashi
    source ~/.zshrc
    ```
 
-4. **Generate shell completions (optional):**
+4. **Install shell completions (recommended):**
    ```bash
-   # For zsh
-   gwt completions zsh > ~/.zsh/completions/_gwt
-   # For bash  
-   gwt completions bash > ~/.bash_completion.d/gwt
+   # Check if completions are installed
+   gwt completions
+   
+   # Automatically install completions
+   gwt completions install
+   
+   # Or manually generate for your shell
+   gwt completions generate zsh > ~/.zsh/completions/_gwt
+   gwt completions generate bash > ~/.bash_completion.d/gwt
+   gwt completions generate fish > ~/.config/fish/completions/gwt.fish
    ```
 
-### Option 2: Use Legacy TypeScript Version
+### Option 2: Direct Binary Download (Coming Soon)
+Pre-built binaries will be available for:
+- macOS (Intel & Apple Silicon)
+- Linux (x86_64 & ARM64)
+- Windows
 
+### Option 3: Use Legacy TypeScript Version
 The original TypeScript implementation is available in the `typescript-version/` directory:
 ```bash
 cd typescript-version
@@ -75,7 +88,7 @@ source ~/.zshrc
 gwt init git@github.com:username/repo.git
 
 # This creates:
-# - main/ directory (default branch)
+# - main/ directory (or master/ based on default branch)
 # - git-worktree-config.yaml (project metadata)
 # You'll see git clone progress in real-time!
 ```
@@ -84,29 +97,43 @@ gwt init git@github.com:username/repo.git
 ```bash
 # Create new feature worktree
 gwt add feature/user-auth
-# Creates feature/user-auth/ directory and automatically switches to it
+# Creates feature/user-auth/ directory
 
 # Create bugfix worktree  
 gwt add bugfix/login-error
+# Creates bugfix/login-error/ directory
 ```
 
-### 3. Switch Between Work
+### 3. List Your Worktrees
 ```bash
-# Quick switch between worktrees
-gwt switch main
-gwt switch feature/user-auth
-gwt switch bugfix/login-error
-
-# See all your worktrees
+# See all your worktrees in a clean table
 gwt list
+
+# Output:
+# ┌────────────────────────────────────┬────────────────────┬─────────────┐
+# │ PATH                               │ BRANCH             │ HEAD        │
+# ├────────────────────────────────────┼────────────────────┼─────────────┤
+# │ /path/to/main                      │ main               │ abc123d...  │
+# │ /path/to/feature/user-auth         │ feature/user-auth  │ def456e...  │
+# │ /path/to/bugfix/login-error        │ bugfix/login-error │ ghi789f...  │
+# └────────────────────────────────────┴────────────────────┴─────────────┘
 ```
 
-### 4. Clean Up When Done
+### 4. Switch Between Work
+```bash
+# Navigate to any worktree directory
+cd ../feature/user-auth
+cd ../main
+# No git checkout needed!
+```
+
+### 5. Clean Up When Done
 ```bash
 # Remove completed feature
-gwt remove feature/user-auth  # Removes worktree and branch
+gwt remove feature/user-auth  # Removes worktree
 
 # Or remove current worktree
+cd ../feature/old-feature
 gwt remove  # Removes current worktree you're in
 ```
 
@@ -117,27 +144,22 @@ gwt remove  # Removes current worktree you're in
 gwt init git@github.com:company/web-app.git
 cd main
 
-# Work on main features
+# Work on a new feature
 gwt add feature/shopping-cart
-# Now in feature/shopping-cart/ directory
+cd ../feature/shopping-cart
 # Make commits, push changes...
 
 # Urgent bugfix needed - no stashing required!
 gwt add hotfix/payment-bug
-# Now in hotfix/payment-bug/ directory  
+cd ../hotfix/payment-bug
 # Fix bug, commit, push...
 
 # Back to feature work
-gwt switch feature/shopping-cart
+cd ../feature/shopping-cart
 # Continue where you left off
 
 # Review all work
 gwt list
-# Shows:
-# PATH                          BRANCH
-# /path/to/main                 main
-# /path/to/feature/shopping-cart feature/shopping-cart  
-# /path/to/hotfix/payment-bug   hotfix/payment-bug
 
 # Clean up merged work
 gwt remove hotfix/payment-bug
@@ -148,17 +170,19 @@ gwt remove hotfix/payment-bug
 | Command | Description | Example | Status |
 |---------|-------------|---------|---------|
 | `gwt init <url>` | Initialize worktree project from repo | `gwt init git@github.com:user/repo.git` | ✅ **Working** |
-| `gwt list` | List all worktrees | `gwt list` | ✅ **Working** |
-| `gwt add <branch>` | Create new worktree/branch | `gwt add feature/new-ui` | ✅ **Working** |
-| `gwt switch <branch>` | Switch to existing worktree | `gwt switch main` | ✅ **Working** |
-| `gwt remove [branch]` | Remove worktree (current if no args) | `gwt remove old-feature` | ✅ **Working** |
-| `gwt completions <shell>` | Generate shell completions | `gwt completions zsh` | ✅ **Working** |
+| `gwt list` | List all worktrees in a table | `gwt list` | ✅ **Working** |
+| `gwt add <branch>` | Create new worktree for branch | `gwt add feature/new-ui` | 🚧 **Partial** |
+| `gwt remove [branch]` | Remove worktree (current if no args) | `gwt remove old-feature` | 🚧 **Partial** |
+| `gwt completions` | Check completion status | `gwt completions` | ✅ **Working** |
+| `gwt completions install` | Auto-install completions | `gwt completions install` | ✅ **Working** |
+| `gwt completions generate <shell>` | Generate completions | `gwt completions generate zsh` | ✅ **Working** |
 
 **New in Rust version:**
 - ✅ **Real-time streaming output** - See git clone progress live!
 - ✅ **Single binary** - No Node.js dependency
-- ✅ **Built-in completions** - Generate for bash, zsh, fish
+- ✅ **Smart completions** - Auto-install and branch name completion
 - ✅ **Better performance** - Compiled Rust vs interpreted TypeScript
+- ✅ **Sharp table output** - Clean, modern table formatting
 
 ## Hooks & Automation
 
@@ -166,7 +190,7 @@ Git worktree scripts support **hooks** - custom commands that run automatically 
 
 ### Quick Setup
 ```bash
-# After gwtinit, edit git-worktree-config.yaml
+# After gwt init, edit git-worktree-config.yaml
 hooks:
   postAdd:
     - "npm install"      # Auto-install deps in new worktrees
@@ -176,7 +200,7 @@ hooks:
 ### Example Workflow with Hooks
 ```bash
 # Initialize project (creates config with hook examples)
-gwtinit git@github.com:company/web-app.git
+gwt init git@github.com:company/web-app.git
 
 # Edit git-worktree-config.yaml to enable hooks:
 # hooks:
@@ -184,12 +208,11 @@ gwtinit git@github.com:company/web-app.git
 #     - "npm install"    # Remove # to enable
 
 # Create new worktree - hooks run automatically!
-gwtadd feature/shopping-cart
+gwt add feature/shopping-cart
 # This will:
 # 1. Create the worktree  
-# 2. Run "npm install" automatically
-# 3. Show real-time output from npm
-# 4. Switch to the new directory
+# 2. Run "npm install" automatically with streaming output
+# 3. cd to the new directory
 
 # Continue with your work - dependencies already installed!
 ```
@@ -197,7 +220,6 @@ gwtadd feature/shopping-cart
 ### Available Hook Types
 - **`postInit`**: After creating a new project
 - **`postAdd`**: After creating a new worktree (perfect for setup)
-- **`postSwitch`**: After switching to a worktree  
 - **`postRemove`**: After removing a worktree (great for cleanup)
 
 ### Variable Support
@@ -214,28 +236,70 @@ By default, all hooks are commented out (disabled) - uncomment the ones you want
 ## Benefits
 
 - **🚀 No Context Switching**: Each branch keeps its own working directory
-- **🔄 Instant Branch Switching**: No checkout delays or merge conflicts  
+- **🔄 Instant Branch Switching**: Just cd to the directory
 - **🛡️ Safe Experimentation**: Isolated working directories prevent conflicts
 - **⚡ Parallel Development**: Work on multiple features simultaneously
 - **🧹 Easy Cleanup**: Remove completed work with one command
 - **🪝 Smart Automation**: Hooks automatically run setup/cleanup tasks
 - **📊 Real-time Feedback**: See command output as it executes
+- **🎯 Tab Completion**: Branch names auto-complete for add/remove commands
 
 ## Requirements
 
-- Node.js 18+ and pnpm
-- Git 2.5+ (for worktree support)
-- Bash/Zsh shell
+- **Rust 1.70+** (for building from source)
+- **Git 2.5+** (for worktree support)
+- **Bash/Zsh/Fish shell** (for completions)
 
 ## Development
 
 ```bash
+# Build debug binary
+cargo build
+
+# Build release binary
+cargo build --release
+
 # Run tests
-pnpm test
+cargo test
 
 # Type checking
-pnpm typecheck
+cargo check
 
-# Linting
-pnpm lint
+# Run with cargo
+cargo run -- <command>
 ```
+
+## Troubleshooting
+
+### Completions not working?
+```bash
+# Check if completions are installed
+gwt completions
+
+# Auto-install completions
+gwt completions install
+
+# Reload your shell
+source ~/.zshrc  # or exec zsh
+```
+
+### Command not found?
+Make sure the binary is in your PATH:
+```bash
+which gwt
+# If not found, add to PATH:
+export PATH="$HOME/.git-worktree-scripts/target/release:$PATH"
+```
+
+## Contributing
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests (`cargo test`)
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details
