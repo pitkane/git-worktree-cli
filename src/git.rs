@@ -56,6 +56,7 @@ pub fn get_default_branch(repo_path: &Path) -> Result<String> {
 }
 
 /// Add a new worktree
+#[allow(dead_code)]
 pub fn add_worktree(git_dir: &Path, worktree_path: &Path, branch: &str, base_branch: &str) -> Result<()> {
     execute_streaming(
         &["worktree", "add", worktree_path.to_str().unwrap(), "-b", branch, base_branch],
@@ -70,6 +71,7 @@ pub fn list_worktrees(git_dir: Option<&Path>) -> Result<Vec<Worktree>> {
 }
 
 /// Remove a worktree
+#[allow(dead_code)]
 pub fn remove_worktree(git_dir: &Path, worktree_path: &Path) -> Result<()> {
     execute_streaming(
         &["worktree", "remove", worktree_path.to_str().unwrap()],
@@ -78,6 +80,7 @@ pub fn remove_worktree(git_dir: &Path, worktree_path: &Path) -> Result<()> {
 }
 
 /// Delete a branch
+#[allow(dead_code)]
 pub fn delete_branch(git_dir: &Path, branch_name: &str) -> Result<()> {
     execute_streaming(
         &["branch", "-D", branch_name],

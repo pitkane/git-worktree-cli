@@ -1,8 +1,32 @@
 # Setting up GWT Tab Completions
 
-## For Zsh
+## Automatic Installation (Recommended)
 
-Add the following to your `~/.zshrc`:
+The easiest way to install completions is to use the built-in install command:
+
+```bash
+# Check if completions are installed
+gwt completions
+
+# Install completions for your shell (auto-detects shell)
+gwt completions install
+
+# Install for a specific shell
+gwt completions install zsh
+```
+
+The installer will:
+- Detect your shell automatically
+- Find the completion files
+- Update your shell configuration (~/.zshrc for zsh)
+- Remove any duplicate entries
+- Provide instructions to activate completions
+
+## Manual Installation
+
+### For Zsh
+
+If you prefer manual installation, add the following to your `~/.zshrc`:
 
 ```bash
 # GWT completions
@@ -11,16 +35,6 @@ if [[ -f ~/.git-worktree-scripts/completions/gwt-completions.zsh ]]; then
     autoload -Uz compinit && compinit
     source ~/.git-worktree-scripts/completions/gwt-completions.zsh
 fi
-```
-
-Or if you prefer to copy the completion file to a standard location:
-
-```bash
-# Copy to zsh completions directory
-cp ~/.git-worktree-scripts/completions/gwt-completions.zsh /usr/local/share/zsh/site-functions/_gwt
-
-# Then reload your shell
-exec zsh
 ```
 
 ## For Bash
