@@ -13,7 +13,7 @@ pub struct Cli {
     /// Print version
     #[arg(short = 'v', long = "version", action = clap::ArgAction::Version)]
     pub version: (),
-    
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -41,22 +41,22 @@ pub enum Commands {
         /// The repository URL to clone
         repo_url: String,
     },
-    
+
     /// Add a new worktree for a branch
     Add {
         /// Branch name (can include slashes like feature/branch-name)
         branch_name: String,
     },
-    
+
     /// List all worktrees in the current project
     List,
-    
+
     /// Remove a worktree
     Remove {
         /// Branch name to remove (current worktree if not specified)
         branch_name: Option<String>,
     },
-    
+
     /// Generate or install shell completions
     Completions {
         /// Action to perform (defaults to generate)
