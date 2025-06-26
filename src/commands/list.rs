@@ -8,12 +8,10 @@ use crate::git;
 
 #[derive(Tabled)]
 struct WorktreeDisplay {
-    #[tabled(rename = "PATH")]
-    path: String,
     #[tabled(rename = "BRANCH")]
     branch: String,
-    #[tabled(rename = "HEAD")]
-    head: String,
+    #[tabled(rename = "PULL REQUEST")]
+    pull_request: String,
 }
 
 pub fn run() -> Result<()> {
@@ -32,7 +30,6 @@ pub fn run() -> Result<()> {
     let display_worktrees: Vec<WorktreeDisplay> = worktrees
         .into_iter()
         .map(|wt| WorktreeDisplay {
-            path: wt.path.display().to_string(),
             branch: wt.branch.map(|b| {
                 // Clean up branch names - remove refs/heads/ prefix
                 if b.starts_with("refs/heads/") {
@@ -47,11 +44,7 @@ pub fn run() -> Result<()> {
                     wt.head.chars().take(8).collect()
                 }
             }),
-            head: if wt.head.len() > 8 { 
-                format!("{}...", &wt.head[..8])
-            } else { 
-                wt.head 
-            },
+            pull_request: "-".to_string(), // Placeholder for future PR integration
         })
         .collect();
     
