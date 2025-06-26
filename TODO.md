@@ -18,17 +18,23 @@
 - ✅ **Test suite** - Integration and unit tests with assert_cmd
 
 ### Shell Completions
-- ✅ **Built-in completion generation** - Generate for bash/zsh/fish
-- ✅ **Auto-install completions** - `gwt completions install` command
+- ✅ **Built-in completion generation** - Generate for bash/zsh/fish/powershell/elvish
+- ✅ **Build-time completion generation** - Completions generated at compile time via build.rs
+- ✅ **Embedded completions** - Completions built into binary using include_str!
+- ✅ **Auto-install completions** - `gwt completions install [shell]` command
 - ✅ **Completion status check** - `gwt completions` shows install status
 - ✅ **Smart shell detection** - Auto-detects user's shell
+- ✅ **Multi-shell support** - bash, zsh, fish, powershell, elvish all supported
+- ✅ **Automatic path detection** - Smart detection of completion directories per shell
 - ✅ **Branch name completion** - Tab completion for add/remove commands
 - ✅ **Fixed completion parsing** - Correctly parses table output for branch names
 
-### Code Quality
+### Code Quality & Architecture
 - ✅ **Removed all build warnings** - Clean compilation
 - ✅ **Proper error handling** - Using anyhow for context
 - ✅ **Real-time streaming output** - Native Rust process handling
+- ✅ **Modular architecture** - Separated CLI structure (cli.rs) for build-time usage
+- ✅ **Build script integration** - build.rs for compile-time tasks
 
 ### Legacy
 - ✅ Original TypeScript version preserved in `typescript-version/` directory
@@ -77,9 +83,11 @@
 
 ### Distribution
 - [ ] **GitHub Releases** - Automated binary releases
-- [ ] **Homebrew formula** - Easy macOS installation
+- [ ] **Install script** - curl-able install.sh for easy setup
+- [ ] **Homebrew formula** - Easy macOS installation with auto-completions
 - [ ] **AUR package** - Arch Linux support
 - [ ] **Cargo crates.io** - Publish to Rust package registry
+- [ ] **`gwt doctor`** - Health check command to diagnose issues
 
 ## 🐛 Known Issues
 
@@ -95,5 +103,7 @@ The Rust rewrite has successfully achieved:
 3. Enhanced completion system with auto-install
 4. Clean, warning-free codebase
 5. Professional table output
+6. Embedded completions for all major shells
+7. Build-time completion generation ensuring sync with CLI
 
 Priority should be on completing the `gwt add` and `gwt remove` commands to achieve feature parity with the TypeScript version.

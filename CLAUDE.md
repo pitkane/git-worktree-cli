@@ -45,18 +45,23 @@ This project is a **single Rust binary** that provides git worktree management f
 
 1. **Rust Binary** (`src/`): Core functionality written in Rust
    - `main.rs`: CLI entry point using clap for argument parsing
+   - `cli.rs`: Separated CLI structure for build-time completion generation
    - `commands/`: Individual command implementations (init, add, list, remove)
+   - `completions.rs`: Embedded shell completions with auto-install functionality
    - `config.rs`: YAML configuration file handling using serde
    - `git.rs`: Git operations with native process execution and streaming output
    - `hooks.rs`: Hook execution system with real-time output streaming
    - `utils.rs`: Shared utility functions
+   - `build.rs`: Build script that generates shell completions at compile time
 
 2. **Key Dependencies**:
    - `clap`: Command-line argument parsing with derive macros
+   - `clap_complete`: Shell completion generation (build dependency)
    - `serde` + `serde_yaml`: Configuration file serialization/deserialization
    - `anyhow`: Error handling and context
    - `colored`: Terminal output colorization
    - `chrono`: Date/time handling for config timestamps
+   - `tabled`: Table formatting for list output
 
 3. **Test Infrastructure**:
    - `tests/`: Integration tests using `assert_cmd` and `tempfile`
@@ -158,10 +163,12 @@ hooks:
 
 3. **`gwt completions`**: Enhanced shell completions support ✅
    - ✅ Check if completions are installed
-   - ✅ Auto-install completions with `gwt completions install`
+   - ✅ Auto-install completions with `gwt completions install [shell]`
    - ✅ Generate completions for any shell with `gwt completions generate <shell>`
    - ✅ Smart detection of user's shell
-   - ✅ Safe .zshrc modification (removes duplicates)
+   - ✅ Completions embedded in binary at compile time
+   - ✅ Support for bash, zsh, fish, powershell, and elvish
+   - ✅ Automatic path detection for each shell's completion directory
    - ✅ Branch name completion for add/remove commands
 
 ### 🔄 Partially Implemented Features
@@ -177,12 +184,13 @@ hooks:
 
 - **✅ Real-time streaming output**: Git commands show progress in real-time using Rust's native `Command` with `Stdio::inherit()`
 - **✅ Single binary distribution**: No Node.js runtime or shell wrapper functions needed
-- **✅ Enhanced shell completions**: Auto-install support and smart branch name completion
+- **✅ Embedded completions**: Shell completions are generated at compile time and embedded in the binary
+- **✅ Enhanced shell completions**: Auto-install support for all major shells
 - **✅ Better error handling**: Rust's `Result` type provides robust error propagation
 - **✅ Faster execution**: Compiled binary vs interpreted TypeScript
 - **✅ Cross-platform compatibility**: Easy to build for different OS/architectures
 - **✅ Sharp table formatting**: Professional table output using Unicode box-drawing characters
-- **✅ Completion tab fixes**: Fixed parsing logic for branch name completion
+- **✅ Smart shell detection**: Automatically detects user's shell for completion installation
 
 ## Test Suite
 
@@ -247,3 +255,28 @@ Command::new("sh")
 ```
 
 This eliminates the complex issues that existed with the TypeScript implementation where streaming output required workarounds with `execSync` and `stdio: 'inherit'`.
+
+### Shell Completions Architecture
+
+The Rust implementation uses a build-time completion generation approach:
+
+1. **Build Script (`build.rs`)**:
+   - Generates completions for all supported shells at compile time
+   - Uses the `cli.rs` module to access the CLI structure without dependencies
+   - Stores generated completions in the `OUT_DIR` for embedding
+
+2. **Embedded Completions (`completions.rs`)**:
+   - Uses `include_str!` to embed completion files directly in the binary
+   - Provides shell detection and automatic installation paths
+   - Handles shell-specific installation requirements
+
+3. **Benefits**:
+   - **No external files needed**: Completions are part of the binary
+   - **Always in sync**: Completions automatically match the CLI structure
+   - **Easy distribution**: Single binary includes everything
+   - **Multi-shell support**: All shells supported without extra downloads
+
+Example of embedded completion:
+```rust
+const BASH_COMPLETION: &str = include_str!(concat!(env!("OUT_DIR"), "/completions/gwt.bash"));
+```
