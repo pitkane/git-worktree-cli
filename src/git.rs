@@ -1,7 +1,7 @@
-use std::process::{Command, Stdio};
-use std::path::{Path, PathBuf};
-use anyhow::{Result, Context, bail};
+use anyhow::{bail, Context, Result};
 use colored::Colorize;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 /// Execute a git command with real-time output streaming
 pub fn execute_streaming(args: &[&str], cwd: Option<&Path>) -> Result<()> {
@@ -9,18 +9,17 @@ pub fn execute_streaming(args: &[&str], cwd: Option<&Path>) -> Result<()> {
     cmd.args(args)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
-    
+
     if let Some(dir) = cwd {
         cmd.current_dir(dir);
     }
-    
-    let status = cmd.status()
-        .context("Failed to execute git command")?;
-    
+
+    let status = cmd.status().context("Failed to execute git command")?;
+
     if !status.success() {
         bail!("Git command failed with exit code: {:?}", status.code());
     }
-    
+
     Ok(())
 }
 
@@ -28,19 +27,18 @@ pub fn execute_streaming(args: &[&str], cwd: Option<&Path>) -> Result<()> {
 pub fn execute_capture(args: &[&str], cwd: Option<&Path>) -> Result<String> {
     let mut cmd = Command::new("git");
     cmd.args(args);
-    
+
     if let Some(dir) = cwd {
         cmd.current_dir(dir);
     }
-    
-    let output = cmd.output()
-        .context("Failed to execute git command")?;
-    
+
+    let output = cmd.output().context("Failed to execute git command")?;
+
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         bail!("Git command failed: {}", stderr);
     }
-    
+
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
 
@@ -57,10 +55,22 @@ pub fn get_default_branch(repo_path: &Path) -> Result<String> {
 
 /// Add a new worktree
 #[allow(dead_code)]
-pub fn add_worktree(git_dir: &Path, worktree_path: &Path, branch: &str, base_branch: &str) -> Result<()> {
+pub fn add_worktree(
+    git_dir: &Path,
+    worktree_path: &Path,
+    branch: &str,
+    base_branch: &str,
+) -> Result<()> {
     execute_streaming(
-        &["worktree", "add", worktree_path.to_str().unwrap(), "-b", branch, base_branch],
-        Some(git_dir)
+        &[
+            "worktree",
+            "add",
+            worktree_path.to_str().unwrap(),
+            "-b",
+            branch,
+            base_branch,
+        ],
+        Some(git_dir),
     )
 }
 
@@ -75,31 +85,27 @@ pub fn list_worktrees(git_dir: Option<&Path>) -> Result<Vec<Worktree>> {
 pub fn remove_worktree(git_dir: &Path, worktree_path: &Path) -> Result<()> {
     execute_streaming(
         &["worktree", "remove", worktree_path.to_str().unwrap()],
-        Some(git_dir)
+        Some(git_dir),
     )
 }
 
 /// Delete a branch
 #[allow(dead_code)]
 pub fn delete_branch(git_dir: &Path, branch_name: &str) -> Result<()> {
-    execute_streaming(
-        &["branch", "-D", branch_name],
-        Some(git_dir)
-    )
+    execute_streaming(&["branch", "-D", branch_name], Some(git_dir))
 }
 
 /// Check if a branch exists
 pub fn branch_exists(git_dir: &Path, branch_name: &str) -> Result<(bool, bool)> {
-    let local = execute_capture(
-        &["branch", "--list", branch_name],
-        Some(git_dir)
-    ).unwrap_or_default();
-    
+    let local =
+        execute_capture(&["branch", "--list", branch_name], Some(git_dir)).unwrap_or_default();
+
     let remote = execute_capture(
         &["branch", "-r", "--list", &format!("origin/{}", branch_name)],
-        Some(git_dir)
-    ).unwrap_or_default();
-    
+        Some(git_dir),
+    )
+    .unwrap_or_default();
+
     Ok((!local.is_empty(), !remote.is_empty()))
 }
 
@@ -122,7 +128,7 @@ pub struct Worktree {
 fn parse_worktree_list(output: &str) -> Result<Vec<Worktree>> {
     let mut worktrees = Vec::new();
     let mut current_worktree: Option<PartialWorktree> = None;
-    
+
     #[derive(Default)]
     struct PartialWorktree {
         path: Option<PathBuf>,
@@ -130,7 +136,7 @@ fn parse_worktree_list(output: &str) -> Result<Vec<Worktree>> {
         branch: Option<String>,
         bare: bool,
     }
-    
+
     for line in output.lines() {
         if line.starts_with("worktree ") {
             if let Some(wt) = current_worktree.take() {
@@ -161,7 +167,7 @@ fn parse_worktree_list(output: &str) -> Result<Vec<Worktree>> {
             }
         }
     }
-    
+
     if let Some(wt) = current_worktree {
         if let (Some(path), Some(head)) = (wt.path, wt.head) {
             worktrees.push(Worktree {
@@ -172,6 +178,6 @@ fn parse_worktree_list(output: &str) -> Result<Vec<Worktree>> {
             });
         }
     }
-    
+
     Ok(worktrees)
 }

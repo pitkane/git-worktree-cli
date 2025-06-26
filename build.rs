@@ -15,17 +15,12 @@ fn main() -> std::io::Result<()> {
     fs::create_dir_all(&completions_dir)?;
 
     let mut cmd = Cli::command();
-    
+
     // Generate completions for all supported shells
     for shell in Shell::value_variants() {
-        let path = generate_to(
-            *shell,
-            &mut cmd,
-            "gwt",
-            &completions_dir,
-        )?;
-        
-        println!("cargo:warning=Generated {} completions: {:?}", shell, path);
+        let path = generate_to(*shell, &mut cmd, "gwt", &completions_dir)?;
+
+        println!("Generated {} completions: {:?}", shell, path);
     }
 
     // Tell Cargo to rerun this script if cli.rs changes
