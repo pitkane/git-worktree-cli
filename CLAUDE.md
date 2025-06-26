@@ -171,13 +171,24 @@ hooks:
    - ✅ Automatic path detection for each shell's completion directory
    - ✅ Branch name completion for add/remove commands
 
-### 🔄 Partially Implemented Features
+4. **`gwt add`**: Create new worktrees from branch names ✅
+   - ✅ Create worktree from existing local branch
+   - ✅ Create worktree from existing remote branch
+   - ✅ Create new branch from main/master branch
+   - ✅ Smart branch detection and handling
+   - ✅ Execute post-add hooks with variable substitution
+   - ✅ Real-time streaming output for git operations
+   - ✅ Project root detection and validation
 
-4. **`gwt add`**: Create new worktrees from branch names 🔄
-   - ⚠️ Stub implementation only - needs full functionality
-
-5. **`gwt remove`**: Remove worktrees with safety checks 🔄
-   - ⚠️ Stub implementation only - needs full functionality
+5. **`gwt remove`**: Remove worktrees with safety checks ✅
+   - ✅ Remove worktree by branch name or current worktree
+   - ✅ Interactive confirmation prompts
+   - ✅ Safety checks (prevents removing bare repository)
+   - ✅ Automatic branch deletion for feature branches
+   - ✅ Preserves main branches (main/master/dev/develop)
+   - ✅ Handles current directory when removing current worktree
+   - ✅ Execute post-remove hooks with variable substitution
+   - ✅ Comprehensive error handling and user feedback
 
 
 ### 🎯 Major Improvements Achieved

@@ -1,64 +1,22 @@
 # Git Worktree CLI (gwt) TODO
 
-## ✅ Completed
+This file tracks pending tasks and future enhancements for the project.
 
-### Rust Implementation - Core Features
-- ✅ **Converted from TypeScript to Rust** - Single binary, no Node.js dependency
-- ✅ **`gwt init`** - Initialize worktrees from repository URLs with real-time git output
-  - ✅ Clones repository with streaming progress
-  - ✅ Detects default branch name
-  - ✅ Creates git-worktree-config.yaml
-  - ✅ Executes post-init hooks
-- ✅ **`gwt list`** - Display worktrees in formatted table
-  - ✅ Finds all worktrees in project
-  - ✅ Sharp table formatting with Unicode borders
-  - ✅ Shows path, branch, and HEAD commit
-- ✅ **Configuration system** - YAML-based config with serde
-- ✅ **Hooks system** - postInit, postAdd, postRemove with variable substitution
-- ✅ **Test suite** - Integration and unit tests with assert_cmd
+## 🎯 High Priority
 
-### Shell Completions
-- ✅ **Built-in completion generation** - Generate for bash/zsh/fish/powershell/elvish
-- ✅ **Build-time completion generation** - Completions generated at compile time via build.rs
-- ✅ **Embedded completions** - Completions built into binary using include_str!
-- ✅ **Auto-install completions** - `gwt completions install [shell]` command
-- ✅ **Completion status check** - `gwt completions` shows install status
-- ✅ **Smart shell detection** - Auto-detects user's shell
-- ✅ **Multi-shell support** - bash, zsh, fish, powershell, elvish all supported
-- ✅ **Automatic path detection** - Smart detection of completion directories per shell
-- ✅ **Branch name completion** - Tab completion for add/remove commands
-- ✅ **Fixed completion parsing** - Correctly parses table output for branch names
+### Distribution & Release
+- [ ] **GitHub Releases** - Automated binary releases with CI/CD
+- [ ] **Install script** - curl-able install.sh for easy setup like other Rust tools
+- [ ] **Homebrew formula** - Easy macOS installation with auto-completions
+- [ ] **Cargo crates.io** - Publish to Rust package registry
 
-### Code Quality & Architecture
-- ✅ **Removed all build warnings** - Clean compilation
-- ✅ **Proper error handling** - Using anyhow for context
-- ✅ **Real-time streaming output** - Native Rust process handling
-- ✅ **Modular architecture** - Separated CLI structure (cli.rs) for build-time usage
-- ✅ **Build script integration** - build.rs for compile-time tasks
+## 🔧 Medium Priority  
 
-### Legacy
-- ✅ Original TypeScript version preserved in `typescript-version/` directory
-
-## 🚧 In Progress / Partial Implementation
-
-### Core Commands
-- 🔄 **`gwt add`** - Create worktrees from branch names
-  - ⚠️ Stub implementation only
-  - [ ] Create worktree from existing branch
-  - [ ] Create worktree with new branch
-  - [ ] Handle remote branches
-  - [ ] Execute post-add hooks
-  - [ ] Auto-navigate to new worktree
-
-- 🔄 **`gwt remove`** - Remove worktrees with safety checks
-  - ⚠️ Stub implementation only
-  - [ ] Remove worktree directory
-  - [ ] Optional branch deletion
-  - [ ] Safety checks for uncommitted changes
-  - [ ] Execute post-remove hooks
-  - [ ] Handle current directory removal
-
-## 📋 Future Enhancements
+### Core Features
+- [ ] **`gwt switch`** - Quick navigation between worktrees
+- [ ] **`gwt doctor`** - Health check command to diagnose issues
+- [ ] **Cleanup command** - Remove stale worktrees in bulk
+- [ ] **Clone existing worktrees** - Support cloning projects with existing worktrees
 
 ### Shell Integration
 - [ ] **Directory change on `gwt add`** - Auto-navigate to new worktree
@@ -66,44 +24,42 @@
   - [ ] Create shell wrapper functions for auto-cd behavior
   - [ ] Update completion scripts to include wrapper
 
-### Core Features
-- [ ] **`gwt switch`** - Quick navigation between worktrees
-- [ ] **PR Integration** - Show Bitbucket/GitHub PR status in list
-- [ ] **Cleanup command** - Remove stale worktrees in bulk
-- [ ] **Clone existing worktrees** - Support cloning projects with existing worktrees
-
 ### Quality of Life
-- [ ] **Filtering** - Filter list by branch pattern, age, status
-- [ ] **Metadata tracking** - Last commit date, creation time, PR links
-- [ ] **Enhanced hooks** - Pre-hooks, conditional execution, error handling
+- [ ] **Command flags** - Add useful flags to existing commands:
+  - [ ] `gwt add --from <branch>` - Create from specific branch instead of main
+  - [ ] `gwt add --no-hooks` - Skip hook execution
+  - [ ] `gwt remove --force` - Skip confirmation prompts
+  - [ ] `gwt remove --keep-branch` - Preserve branch even for feature branches
 - [ ] **Better error messages** - Actionable suggestions for common issues
 - [ ] **Progress indicators** - For long-running operations
 - [ ] **Colored output** - Better visual hierarchy in output
-- [ ] **Config validation** - Validate hooks and settings
+- [ ] **Config validation** - Validate hooks and settings on startup
 
-### Distribution
-- [ ] **GitHub Releases** - Automated binary releases
-- [ ] **Install script** - curl-able install.sh for easy setup
-- [ ] **Homebrew formula** - Easy macOS installation with auto-completions
+## 🚀 Low Priority
+
+### Advanced Features
+- [ ] **PR Integration** - Show Bitbucket/GitHub PR status in list
+- [ ] **Filtering** - Filter list by branch pattern, age, status
+- [ ] **Metadata tracking** - Last commit date, creation time, PR links
+- [ ] **Enhanced hooks** - Pre-hooks, conditional execution, error handling
+- [ ] **Bulk operations** - Remove multiple worktrees with pattern matching
+
+### Platform Support
 - [ ] **AUR package** - Arch Linux support
-- [ ] **Cargo crates.io** - Publish to Rust package registry
-- [ ] **`gwt doctor`** - Health check command to diagnose issues
+- [ ] **Windows testing** - Verify Windows compatibility
+- [ ] **Package managers** - Support for more Linux package managers
 
 ## 🐛 Known Issues
 
 - [ ] Completion parsing assumes specific table format
 - [ ] No Windows support tested
 - [ ] Limited error recovery in hook execution
+- [ ] Build warnings from completion generation (cosmetic)
 
-## 📝 Notes
+## 💡 Ideas for Future Consideration
 
-The Rust rewrite has successfully achieved:
-1. Better performance with compiled binary
-2. Real-time streaming output for git commands
-3. Enhanced completion system with auto-install
-4. Clean, warning-free codebase
-5. Professional table output
-6. Embedded completions for all major shells
-7. Build-time completion generation ensuring sync with CLI
-
-Priority should be on completing the `gwt add` and `gwt remove` commands to achieve feature parity with the TypeScript version.
+- [ ] **Integration with IDEs** - VS Code extension for worktree management
+- [ ] **Git hooks integration** - Automatic setup of git hooks in worktrees
+- [ ] **Template system** - Predefined project templates for different types
+- [ ] **Remote worktrees** - Support for remote filesystem worktrees
+- [ ] **Backup/restore** - Export/import worktree configurations

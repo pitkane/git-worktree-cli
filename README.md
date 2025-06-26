@@ -178,8 +178,8 @@ gwt remove hotfix/payment-bug
 |---------|-------------|---------|---------|
 | `gwt init <url>` | Initialize worktree project from repo | `gwt init git@github.com:user/repo.git` | ✅ **Working** |
 | `gwt list` | List all worktrees in a table | `gwt list` | ✅ **Working** |
-| `gwt add <branch>` | Create new worktree for branch | `gwt add feature/new-ui` | 🚧 **Partial** |
-| `gwt remove [branch]` | Remove worktree (current if no args) | `gwt remove old-feature` | 🚧 **Partial** |
+| `gwt add <branch>` | Create new worktree for branch | `gwt add feature/new-ui` | ✅ **Working** |
+| `gwt remove [branch]` | Remove worktree (current if no args) | `gwt remove old-feature` | ✅ **Working** |
 | `gwt completions` | Check completion status | `gwt completions` | ✅ **Working** |
 | `gwt completions install [shell]` | Auto-install completions | `gwt completions install` | ✅ **Working** |
 | `gwt completions generate <shell>` | Generate completions | `gwt completions generate zsh` | ✅ **Working** |
