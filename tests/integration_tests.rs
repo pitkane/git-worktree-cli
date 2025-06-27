@@ -18,14 +18,14 @@ fn test_gwt_init_with_valid_repo() {
     let mut cmd = Command::cargo_bin("gwt").unwrap();
     cmd.current_dir(temp_path)
         .arg("init")
-        .arg("git@github.com:pitkane/git-worktree-cli.git");
+        .arg("https://github.com/pitkane/git-worktree-cli.git");
 
     let output = cmd.assert().success();
 
     // Check that the command outputs expected messages
     output
         .stdout(predicate::str::contains(
-            "Cloning git@github.com:pitkane/git-worktree-cli.git",
+            "Cloning https://github.com/pitkane/git-worktree-cli.git",
         ))
         .stdout(predicate::str::contains("✓ Repository cloned to:"))
         .stdout(predicate::str::contains("✓ Default branch:"))
@@ -57,7 +57,7 @@ fn test_gwt_init_with_valid_repo() {
 
     // Verify config file content
     let config_content = fs::read_to_string(&config_path).unwrap();
-    assert!(config_content.contains("repositoryUrl: git@github.com:pitkane/git-worktree-cli.git"));
+    assert!(config_content.contains("repositoryUrl: https://github.com/pitkane/git-worktree-cli.git"));
     assert!(config_content.contains("mainBranch:"));
     assert!(config_content.contains("createdAt:"));
     assert!(config_content.contains("hooks:"));
@@ -100,7 +100,7 @@ fn test_gwt_init_hooks_execution() {
     let mut cmd = Command::cargo_bin("gwt").unwrap();
     cmd.current_dir(temp_path)
         .arg("init")
-        .arg("git@github.com:pitkane/git-worktree-cli.git");
+        .arg("https://github.com/pitkane/git-worktree-cli.git");
 
     let output = cmd.assert().success();
 
@@ -153,7 +153,7 @@ fn test_gwt_init_directory_cleanup() {
     let mut cmd = Command::cargo_bin("gwt").unwrap();
     cmd.current_dir(temp_path)
         .arg("init")
-        .arg("git@github.com:pitkane/git-worktree-cli.git");
+        .arg("https://github.com/pitkane/git-worktree-cli.git");
 
     cmd.assert().success();
 
