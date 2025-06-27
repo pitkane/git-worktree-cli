@@ -35,6 +35,16 @@ pub enum CompletionAction {
 }
 
 #[derive(Subcommand)]
+pub enum AuthAction {
+    /// Authenticate with GitHub
+    Github {
+        /// Logout and remove stored credentials
+        #[arg(long)]
+        logout: bool,
+    },
+}
+
+#[derive(Subcommand)]
 pub enum Commands {
     /// Initialize a new worktree project from a repository URL
     Init {
@@ -55,6 +65,12 @@ pub enum Commands {
     Remove {
         /// Branch name to remove (current worktree if not specified)
         branch_name: Option<String>,
+    },
+
+    /// Manage authentication for external services
+    Auth {
+        #[command(subcommand)]
+        action: AuthAction,
     },
 
     /// Generate or install shell completions

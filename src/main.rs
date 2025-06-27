@@ -7,11 +7,12 @@ mod commands;
 mod completions;
 mod config;
 mod git;
+mod github;
 mod hooks;
 mod utils;
 
-use cli::{Cli, Commands, CompletionAction};
-use commands::{add, init, list, remove};
+use cli::{Cli, Commands, CompletionAction, AuthAction};
+use commands::{add, auth, init, list, remove};
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -28,6 +29,13 @@ fn main() -> Result<()> {
         }
         Commands::Remove { branch_name } => {
             remove::run(branch_name.as_deref())?;
+        }
+        Commands::Auth { action } => {
+            match action {
+                AuthAction::Github { logout } => {
+                    auth::run(logout)?;
+                }
+            }
         }
         Commands::Completions { action } => {
             handle_completions(action)?;
