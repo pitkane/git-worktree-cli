@@ -14,11 +14,13 @@ jobs:
     - name: Install stable toolchain
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Check that code can compile
-      run: cargo check 
+    - name: Cache Rust dependencies and build
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: tests
 
-    - name: Check that tests pass
-      run: cargo test
+    - run: |
+        cargo check
+        cargo test
+        cargo build --release
 
-    - name: Check that build works
-      run: cargo build --release
