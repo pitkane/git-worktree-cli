@@ -20,7 +20,6 @@ jobs:
         workspaces: tests
 
     - run: |
-        cargo check
         cargo test
         cargo build --release
       working-directory: tests
