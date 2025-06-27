@@ -4,7 +4,7 @@ use std::fs;
 use colored::Colorize;
 use tabled::{Table, Tabled, settings::Style};
 
-use crate::git;
+use crate::{config, git, github};
 
 #[derive(Tabled)]
 struct WorktreeDisplay {
@@ -26,11 +26,21 @@ pub fn run() -> Result<()> {
         return Ok(());
     }
     
+    // Try to get GitHub info
+    let github_client = github::GitHubClient::new();
+    let (owner, repo) = if let Some((_, config)) = config::GitWorktreeConfig::find_config()? {
+        github::GitHubClient::parse_github_url(&config.repository_url)
+    } else {
+        None
+    }.unwrap_or_default();
+    
+    let has_github_info = !owner.is_empty() && !repo.is_empty() && github_client.has_auth();
+    
     // Convert to display format
     let display_worktrees: Vec<WorktreeDisplay> = worktrees
         .into_iter()
-        .map(|wt| WorktreeDisplay {
-            branch: wt.branch.map(|b| {
+        .map(|wt| {
+            let branch = wt.branch.map(|b| {
                 // Clean up branch names - remove refs/heads/ prefix
                 if b.starts_with("refs/heads/") {
                     b[11..].to_string()
@@ -43,8 +53,39 @@ pub fn run() -> Result<()> {
                 } else {
                     wt.head.chars().take(8).collect()
                 }
-            }),
-            pull_request: "-".to_string(), // Placeholder for future PR integration
+            });
+            
+            // Fetch PR info if available
+            let pull_request = if has_github_info && !wt.bare && branch != "(bare)" {
+                match github_client.get_pull_requests(&owner, &repo, &branch) {
+                    Ok(prs) => {
+                        if prs.is_empty() {
+                            "-".to_string()
+                        } else {
+                            // Show the most recent PR with URL
+                            let pr = &prs[0];
+                            let status = if pr.draft {
+                                "draft".yellow()
+                            } else if pr.state == "open" {
+                                "open".green()
+                            } else if pr.state == "closed" {
+                                "closed".red()
+                            } else {
+                                pr.state.as_str().normal()
+                            };
+                            format!("{} ({})", pr.html_url.blue().underline(), status)
+                        }
+                    }
+                    Err(_) => "?".dimmed().to_string(),
+                }
+            } else {
+                "-".to_string()
+            };
+            
+            WorktreeDisplay {
+                branch,
+                pull_request,
+            }
         })
         .collect();
     
@@ -52,6 +93,10 @@ pub fn run() -> Result<()> {
     let mut table = Table::new(display_worktrees);
     table.with(Style::sharp());
     println!("{}", table);
+    
+    if !has_github_info && !owner.is_empty() && !repo.is_empty() {
+        println!("\n{}", "Tip: Run 'gwt auth github' to enable GitHub pull request information".dimmed());
+    }
     
     Ok(())
 }

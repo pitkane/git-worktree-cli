@@ -109,7 +109,7 @@ pub fn install_completions_for_shell(shell: Shell) -> Result<()> {
         install_path.display().to_string().cyan()
     );
 
-    // Shell-specific instructions
+    // Shell-specific setup
     match shell {
         Shell::Bash => {
             println!("\nTo activate completions in your current shell, run:");
@@ -117,28 +117,7 @@ pub fn install_completions_for_shell(shell: Shell) -> Result<()> {
             println!("\nOr start a new terminal session.");
         }
         Shell::Zsh => {
-            // Check if we need to update .zshrc
-            let zshrc_path = PathBuf::from(env::var("HOME")?).join(".zshrc");
-            if zshrc_path.exists() {
-                let content = fs::read_to_string(&zshrc_path)?;
-                let _fpath_dir = install_path.parent().unwrap();
-
-                if !content.contains(&format!(
-                    "fpath=({}/.local/share/zsh/site-functions",
-                    env::var("HOME")?
-                )) {
-                    println!("\n{}: Add the following to your ~/.zshrc:", "Note".yellow());
-                    println!(
-                        "  fpath=({}/.local/share/zsh/site-functions $fpath)",
-                        env::var("HOME")?
-                    );
-                    println!("  autoload -Uz compinit && compinit");
-                }
-            }
-
-            println!("\nTo activate completions in your current shell, run:");
-            println!("  {}", "source ~/.zshrc".cyan());
-            println!("\nOr start a new terminal session.");
+            setup_zsh_completions()?;
         }
         Shell::Fish => {
             println!("\nCompletions will be available immediately in new fish sessions.");
@@ -159,7 +138,75 @@ pub fn install_completions_for_shell(shell: Shell) -> Result<()> {
     Ok(())
 }
 
+fn setup_zsh_completions() -> Result<()> {
+    let home = env::var("HOME")?;
+    let zshrc_path = PathBuf::from(&home).join(".zshrc");
+    let fpath_entry = format!("fpath=({}/.local/share/zsh/site-functions $fpath)", home);
+    let compinit_entry = "autoload -Uz compinit && compinit";
+    
+    // Check if .zshrc exists
+    if !zshrc_path.exists() {
+        println!("\n{}: ~/.zshrc does not exist. Creating it...", "Note".yellow());
+        fs::write(&zshrc_path, "")?;
+    }
+    
+    let mut content = fs::read_to_string(&zshrc_path)?;
+    let mut modified = false;
+    
+    // Check if fpath entry is already present
+    if !content.contains(&format!("{}/.local/share/zsh/site-functions", home)) {
+        println!("\n✓ Adding completion path to ~/.zshrc");
+        
+        // Add fpath entry
+        if !content.is_empty() && !content.ends_with('\n') {
+            content.push('\n');
+        }
+        content.push_str("\n# Git worktree CLI completions\n");
+        content.push_str(&fpath_entry);
+        content.push('\n');
+        modified = true;
+        
+        // Also add compinit if not present
+        if !content.contains("compinit") {
+            content.push_str(compinit_entry);
+            content.push('\n');
+        }
+    } else {
+        println!("\n✓ Completion path already configured in ~/.zshrc");
+    }
+    
+    // Write back if modified
+    if modified {
+        fs::write(&zshrc_path, content)?;
+        println!("✓ Updated ~/.zshrc");
+    }
+    
+    println!("\nTo activate completions in your current shell, run:");
+    println!("  {}", "source ~/.zshrc".cyan());
+    println!("\nOr start a new terminal session.");
+    
+    Ok(())
+}
+
 pub fn check_completions_installed(shell: Shell) -> Result<bool> {
     let install_path = get_completion_install_path(shell)?;
-    Ok(install_path.exists())
+    
+    // Check if completion file exists
+    if !install_path.exists() {
+        return Ok(false);
+    }
+    
+    // For Zsh, also check if fpath is configured
+    if matches!(shell, Shell::Zsh) {
+        let home = env::var("HOME")?;
+        let zshrc_path = PathBuf::from(&home).join(".zshrc");
+        
+        if zshrc_path.exists() {
+            let content = fs::read_to_string(&zshrc_path)?;
+            let fpath_configured = content.contains(&format!("{}/.local/share/zsh/site-functions", home));
+            return Ok(fpath_configured);
+        }
+    }
+    
+    Ok(true)
 }
