@@ -8,7 +8,7 @@ async function main() {
   const zshrcPath = join(homedir(), ".zshrc");
   const scriptPath = join(process.cwd(), "src/bash-functionality.sh");
 
-  console.log("💫 Initializing @mikko/git-worktree-scripts...");
+  console.log("💫 Initializing @mikko/git-worktree-cli...");
 
   // Check if bash-functionality.sh exists
   if (!existsSync(scriptPath)) {
@@ -24,7 +24,7 @@ async function main() {
 
   // Check if already sourced
   const sourceCommand = `source "${scriptPath}"`;
-  const commentLine = "# @mikko/git-worktree-scripts bash functionality";
+  const commentLine = "# @mikko/git-worktree-cli bash functionality";
 
   if (zshrcContent.includes(sourceCommand)) {
     console.log("⚠️ bash-functionality.sh already sourced in ~/.zshrc");

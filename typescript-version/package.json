@@ -1,5 +1,5 @@
 {
-  "name": "@mikko/git-worktree-scripts",
+  "name": "@mikko/git-worktree-cli",
   "version": "1.0.0",
   "description": "",
   "type": "module",

@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
-import { join, resolve, dirname } from "node:path";
 import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { $ } from "zx";
 
@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const SCRIPT_ROOT = resolve(__dirname, "..");
 const TEST_DIR = join(SCRIPT_ROOT, "test-temp");
-const TEST_REPO_URL = "git@github.com:pitkane/git-worktree-scripts.git";
+const TEST_REPO_URL = "git@github.com:pitkane/git-worktree-cli.git";
 
 class TestRunner {
 	private testCount = 0;
