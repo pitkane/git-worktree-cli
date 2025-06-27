@@ -2,6 +2,15 @@
 
 This file tracks pending tasks and future enhancements for the project.
 
+## ✅ Recently Completed
+
+### Bug Fixes
+- [x] **Table formatting** - Fixed table right margin alignment issues with colored text (Dec 2024)
+- [x] **PR status styling** - Fixed uppercase PR status, now shows lowercase with proper colors (Dec 2024)
+
+### Features  
+- [x] **GitHub PR Integration** - Show GitHub PR status and links in `gwt list` with colors (Dec 2024)
+
 ## 🎯 High Priority
 
 ### Distribution & Release
@@ -38,9 +47,10 @@ This file tracks pending tasks and future enhancements for the project.
 ## 🚀 Low Priority
 
 ### Advanced Features
-- [ ] **PR Integration** - Show Bitbucket/GitHub PR status in list
+- [x] **GitHub PR Integration** - Show GitHub PR status in list (✅ **Completed**)
+- [ ] **Bitbucket PR Integration** - Show Bitbucket PR status in list  
 - [ ] **Filtering** - Filter list by branch pattern, age, status
-- [ ] **Metadata tracking** - Last commit date, creation time, PR links
+- [ ] **Metadata tracking** - Last commit date, creation time
 - [ ] **Enhanced hooks** - Pre-hooks, conditional execution, error handling
 - [ ] **Bulk operations** - Remove multiple worktrees with pattern matching
 

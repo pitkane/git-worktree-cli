@@ -117,13 +117,13 @@ gwt add bugfix/login-error
 gwt list
 
 # Output:
-# ┌────────────────────┬─────────────────────────────────────────────────────┐
-# │ BRANCH             │ PULL REQUEST                                        │
-# ├────────────────────┼─────────────────────────────────────────────────────┤
-# │ main               │ -                                                   │
-# │ feature/user-auth  │ https://github.com/owner/repo/pull/42 (open)       │
-# │ bugfix/login-error │ https://github.com/owner/repo/pull/41 (draft)      │
-# └────────────────────┴─────────────────────────────────────────────────────┘
+# ┌───────────────────┬───────────────────────────────────────────────────────────┐
+# │ BRANCH            │ PULL REQUEST                                              │
+# ├───────────────────┼───────────────────────────────────────────────────────────┤
+# │ main              │ -                                                         │
+# │ feature/user-auth │ https://github.com/owner/repo/pull/42 (open)              │
+# │ bugfix/login-error│ https://github.com/owner/repo/pull/41 (draft)             │
+# └───────────────────┴───────────────────────────────────────────────────────────┘
 ```
 
 ### 4. Switch Between Work
@@ -191,7 +191,8 @@ gwt remove hotfix/payment-bug
 - ✅ **Multi-shell support** - Bash, Zsh, Fish, PowerShell, and Elvish
 - ✅ **Smart completions** - Auto-detect shell and install with one command
 - ✅ **Better performance** - Compiled Rust vs interpreted TypeScript
-- ✅ **Sharp table output** - Clean, modern table formatting
+- ✅ **Sharp table output** - Clean, modern table formatting with proper column alignment
+- ✅ **GitHub PR integration** - See pull request status and links in colorized output
 
 ## Hooks & Automation
 
@@ -248,8 +249,8 @@ View GitHub pull request information directly in your worktree list!
 
 ### Setup GitHub Authentication
 ```bash
-# Authenticate with GitHub (one-time setup)
-gwt auth github
+# Authenticate with GitHub using the gh CLI (one-time setup)
+gh auth login
 
 # This will:
 # 1. Open your browser to GitHub
@@ -259,29 +260,30 @@ gwt auth github
 
 ### View PR Status
 ```bash
-# List worktrees with PR info
+# List worktrees with PR info (requires gh CLI authentication)
 gwt list
 
 # Shows PR URL and status for each branch
-# ┌────────────────────┬─────────────────────────────────────────────────────┐
-# │ BRANCH             │ PULL REQUEST                                        │
-# ├────────────────────┼─────────────────────────────────────────────────────┤
-# │ main               │ -                                                   │
-# │ feature/new-ui     │ https://github.com/owner/repo/pull/123 (open)      │
-# │ fix/memory-leak    │ https://github.com/owner/repo/pull/122 (draft)     │
-# └────────────────────┴─────────────────────────────────────────────────────┘
+# ┌───────────────────┬───────────────────────────────────────────────────────────┐
+# │ BRANCH            │ PULL REQUEST                                              │
+# ├───────────────────┼───────────────────────────────────────────────────────────┤
+# │ main              │ -                                                         │
+# │ feature/new-ui    │ https://github.com/owner/repo/pull/123 (open)             │
+# │ fix/memory-leak   │ https://github.com/owner/repo/pull/122 (draft)            │
+# │ hotfix/security   │ https://github.com/owner/repo/pull/121 (merged)           │
+# └───────────────────┴───────────────────────────────────────────────────────────┘
 ```
 
-### Managing Authentication
-```bash
-# Check authentication status
-gwt auth github
+**Pull Request Status Colors:**
+- 🟢 **open** - Active pull request
+- 🟢 **merged** - Successfully merged
+- 🟡 **draft** - Work in progress
+- 🔴 **closed** - Closed without merging
 
-# Remove stored credentials
-gwt auth github --logout
-```
-
-For setup instructions, see [docs/GITHUB_AUTH_SETUP.md](docs/GITHUB_AUTH_SETUP.md).
+### Requirements
+- Install [GitHub CLI](https://cli.github.com/) (`gh`)
+- Authenticate with `gh auth login`
+- Repository must be hosted on GitHub
 
 ## Benefits
 
