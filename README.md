@@ -117,13 +117,13 @@ gwt add bugfix/login-error
 gwt list
 
 # Output:
-# ┌────────────────────────────────────┬────────────────────┬─────────────┐
-# │ PATH                               │ BRANCH             │ HEAD        │
-# ├────────────────────────────────────┼────────────────────┼─────────────┤
-# │ /path/to/main                      │ main               │ abc123d...  │
-# │ /path/to/feature/user-auth         │ feature/user-auth  │ def456e...  │
-# │ /path/to/bugfix/login-error        │ bugfix/login-error │ ghi789f...  │
-# └────────────────────────────────────┴────────────────────┴─────────────┘
+# ┌────────────────────┬─────────────────────────────────────────────────────┐
+# │ BRANCH             │ PULL REQUEST                                        │
+# ├────────────────────┼─────────────────────────────────────────────────────┤
+# │ main               │ -                                                   │
+# │ feature/user-auth  │ https://github.com/owner/repo/pull/42 (open)       │
+# │ bugfix/login-error │ https://github.com/owner/repo/pull/41 (draft)      │
+# └────────────────────┴─────────────────────────────────────────────────────┘
 ```
 
 ### 4. Switch Between Work
@@ -242,6 +242,47 @@ hooks:
 
 By default, all hooks are commented out (disabled) - uncomment the ones you want to use.
 
+## GitHub Integration
+
+View GitHub pull request information directly in your worktree list!
+
+### Setup GitHub Authentication
+```bash
+# Authenticate with GitHub (one-time setup)
+gwt auth github
+
+# This will:
+# 1. Open your browser to GitHub
+# 2. Display a code to enter
+# 3. Save your authentication securely
+```
+
+### View PR Status
+```bash
+# List worktrees with PR info
+gwt list
+
+# Shows PR URL and status for each branch
+# ┌────────────────────┬─────────────────────────────────────────────────────┐
+# │ BRANCH             │ PULL REQUEST                                        │
+# ├────────────────────┼─────────────────────────────────────────────────────┤
+# │ main               │ -                                                   │
+# │ feature/new-ui     │ https://github.com/owner/repo/pull/123 (open)      │
+# │ fix/memory-leak    │ https://github.com/owner/repo/pull/122 (draft)     │
+# └────────────────────┴─────────────────────────────────────────────────────┘
+```
+
+### Managing Authentication
+```bash
+# Check authentication status
+gwt auth github
+
+# Remove stored credentials
+gwt auth github --logout
+```
+
+For setup instructions, see [docs/GITHUB_AUTH_SETUP.md](docs/GITHUB_AUTH_SETUP.md).
+
 ## Benefits
 
 - **🚀 No Context Switching**: Each branch keeps its own working directory
@@ -252,6 +293,7 @@ By default, all hooks are commented out (disabled) - uncomment the ones you want
 - **🪝 Smart Automation**: Hooks automatically run setup/cleanup tasks
 - **📊 Real-time Feedback**: See command output as it executes
 - **🎯 Tab Completion**: Branch names auto-complete for add/remove commands
+- **🔗 GitHub Integration**: View pull request status directly in worktree list
 
 ## Requirements
 
