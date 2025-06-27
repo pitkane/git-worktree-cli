@@ -115,7 +115,7 @@ fn test_gwt_help() {
         .stdout(predicate::str::contains("init"))
         .stdout(predicate::str::contains("add"))
         .stdout(predicate::str::contains("list"))
-        .stdout(predicate::str::contains("switch"))
+        .stdout(predicate::str::contains("auth"))
         .stdout(predicate::str::contains("remove"));
 }
 

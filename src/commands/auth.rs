@@ -7,10 +7,10 @@ pub fn run(logout: bool) -> Result<()> {
     } else {
         let client = GitHubClient::new();
         if client.has_auth() {
-            println!("✓ You are already authenticated with GitHub");
-            println!("Run 'gwt auth github --logout' to remove stored credentials");
+            println!("✓ You are already authenticated with GitHub via gh CLI");
+            println!("Run 'gh auth logout' to remove credentials");
         } else {
-            client.authenticate()?;
+            println!("Please authenticate with GitHub using: gh auth login");
         }
     }
     Ok(())

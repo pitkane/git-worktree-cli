@@ -10,6 +10,7 @@ pub struct GitWorktreeConfig {
     pub repository_url: String,
     pub main_branch: String,
     pub created_at: DateTime<Utc>,
+    pub source_control: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hooks: Option<Hooks>,
 }
@@ -31,6 +32,7 @@ impl GitWorktreeConfig {
             repository_url,
             main_branch,
             created_at: Utc::now(),
+            source_control: "github".to_string(),
             hooks: Some(Hooks {
                 post_add: Some(vec!["# npm install".to_string()]),
                 post_remove: Some(vec![
@@ -93,6 +95,7 @@ mod tests {
 
         assert_eq!(config.repository_url, "git@github.com:test/repo.git");
         assert_eq!(config.main_branch, "main");
+        assert_eq!(config.source_control, "github");
         assert!(config.hooks.is_some());
 
         let hooks = config.hooks.unwrap();

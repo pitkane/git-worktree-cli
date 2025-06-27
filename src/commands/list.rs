@@ -30,9 +30,10 @@ pub fn run() -> Result<()> {
     let github_client = github::GitHubClient::new();
     let (owner, repo) = if let Some((_, config)) = config::GitWorktreeConfig::find_config()? {
         github::GitHubClient::parse_github_url(&config.repository_url)
+            .unwrap_or_else(|| ("".to_string(), "".to_string()))
     } else {
-        None
-    }.unwrap_or_default();
+        ("".to_string(), "".to_string())
+    };
     
     let has_github_info = !owner.is_empty() && !repo.is_empty() && github_client.has_auth();
     
@@ -95,7 +96,7 @@ pub fn run() -> Result<()> {
     println!("{}", table);
     
     if !has_github_info && !owner.is_empty() && !repo.is_empty() {
-        println!("\n{}", "Tip: Run 'gwt auth github' to enable GitHub pull request information".dimmed());
+        println!("\n{}", "Tip: Run 'gh auth login' to enable GitHub pull request information".dimmed());
     }
     
     Ok(())
