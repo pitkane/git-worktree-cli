@@ -7,11 +7,11 @@ function gwtinit() {
 		return 1
 	fi
 	
-	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-init.ts" "$1"
+	"$HOME/.git-worktree-cli/node_modules/.bin/tsx" "$HOME/.git-worktree-cli/src/git-worktree-init.ts" "$1"
 }
 
 function gwtlist() {
-	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-list.ts" "$@"
+	"$HOME/.git-worktree-cli/node_modules/.bin/tsx" "$HOME/.git-worktree-cli/src/git-worktree-list.ts" "$@"
 }
 
 function gwtadd() {
@@ -22,7 +22,7 @@ function gwtadd() {
 	fi
 	
 	local result
-	result=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-add.ts" "$1")
+	result=$("$HOME/.git-worktree-cli/node_modules/.bin/tsx" "$HOME/.git-worktree-cli/src/git-worktree-add.ts" "$1")
 	local exit_code=$?
 	
 	# Print the output from the script
@@ -46,7 +46,7 @@ function gwtadd() {
 
 function gwtswitch() {
 	local result
-	result=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-switch.ts" "$@")
+	result=$("$HOME/.git-worktree-cli/node_modules/.bin/tsx" "$HOME/.git-worktree-cli/src/git-worktree-switch.ts" "$@")
 	local exit_code=$?
 	
 	# Print the output from the script
@@ -70,7 +70,7 @@ function gwtremove() {
 	local original_dir="$(pwd)"
 	
 	# Run the TypeScript script directly for interactive prompts
-	"$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-remove.ts" "$1"
+	"$HOME/.git-worktree-cli/node_modules/.bin/tsx" "$HOME/.git-worktree-cli/src/git-worktree-remove.ts" "$1"
 	local exit_code=$?
 	
 	if [ $exit_code -eq 0 ]; then
@@ -114,7 +114,7 @@ function _gwtswitch_completion() {
 	local completions
 	
 	# Get completions from our TypeScript script
-	completions=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-completion.ts" "gwtswitch" "$current_word" 2>/dev/null)
+	completions=$("$HOME/.git-worktree-cli/node_modules/.bin/tsx" "$HOME/.git-worktree-cli/src/git-worktree-completion.ts" "gwtswitch" "$current_word" 2>/dev/null)
 	
 	if [[ -n "$completions" ]]; then
 		# Check if it's a help message (starts with #)
@@ -141,7 +141,7 @@ function _gwtadd_completion() {
 	local completions
 	
 	# Get completions from our TypeScript script
-	completions=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-completion.ts" "gwtadd" "$current_word" 2>/dev/null)
+	completions=$("$HOME/.git-worktree-cli/node_modules/.bin/tsx" "$HOME/.git-worktree-cli/src/git-worktree-completion.ts" "gwtadd" "$current_word" 2>/dev/null)
 	
 	if [[ -n "$completions" ]]; then
 		if [[ "$completions" =~ ^# ]]; then
@@ -165,7 +165,7 @@ function _gwtremove_completion() {
 	local completions
 	
 	# Get completions from our TypeScript script
-	completions=$("$HOME/.git-worktree-scripts/node_modules/.bin/tsx" "$HOME/.git-worktree-scripts/src/git-worktree-completion.ts" "gwtremove" "$current_word" 2>/dev/null)
+	completions=$("$HOME/.git-worktree-cli/node_modules/.bin/tsx" "$HOME/.git-worktree-cli/src/git-worktree-completion.ts" "gwtremove" "$current_word" 2>/dev/null)
 	
 	if [[ -n "$completions" ]]; then
 		if [[ "$completions" =~ ^# ]]; then
