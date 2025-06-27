@@ -65,19 +65,21 @@ pub fn run() -> Result<()> {
                         } else {
                             // Show the most recent PR with URL
                             let pr = &prs[0];
-                            let status = if pr.draft {
-                                "draft".yellow()
-                            } else if pr.state == "open" {
-                                "open".green()
-                            } else if pr.state == "closed" {
-                                "closed".red()
+                            let status_text = if pr.draft {
+                                "DRAFT"
+                            } else if pr.state.to_lowercase() == "open" {
+                                "OPEN"
+                            } else if pr.state.to_lowercase() == "closed" {
+                                "CLOSED"
+                            } else if pr.state.to_lowercase() == "merged" {
+                                "MERGED"
                             } else {
-                                pr.state.as_str().normal()
+                                &pr.state.to_uppercase()
                             };
-                            format!("{} ({})", pr.html_url.blue().underline(), status)
+                            format!("{} ({})", pr.html_url, status_text)
                         }
                     }
-                    Err(_) => "?".dimmed().to_string(),
+                    Err(_) => "?".to_string(),
                 }
             } else {
                 "-".to_string()
@@ -93,13 +95,50 @@ pub fn run() -> Result<()> {
     // Create and display the table
     let mut table = Table::new(display_worktrees);
     table.with(Style::sharp());
-    println!("{}", table);
+    
+    // Apply coloring to the table output
+    let table_string = table.to_string();
+    let colored_table = apply_colors_to_table(&table_string);
+    println!("{}", colored_table);
     
     if !has_github_info && !owner.is_empty() && !repo.is_empty() {
         println!("\n{}", "Tip: Run 'gh auth login' to enable GitHub pull request information".dimmed());
     }
     
     Ok(())
+}
+
+fn apply_colors_to_table(table_str: &str) -> String {
+    let lines: Vec<&str> = table_str.lines().collect();
+    let mut result = String::new();
+    
+    for line in lines {
+        let mut colored_line = line.to_string();
+        
+        // Color status indicators
+        if line.contains("(OPEN)") {
+            colored_line = colored_line.replace("(OPEN)", &format!("({})", "open".green()));
+        } else if line.contains("(CLOSED)") {
+            colored_line = colored_line.replace("(CLOSED)", &format!("({})", "closed".red()));
+        } else if line.contains("(MERGED)") {
+            colored_line = colored_line.replace("(MERGED)", &format!("({})", "merged".green()));
+        } else if line.contains("(DRAFT)") {
+            colored_line = colored_line.replace("(DRAFT)", &format!("({})", "draft".yellow()));
+        }
+        
+        // Color URLs - find complete URLs and color them
+        if let Some(url_start) = line.find("https://github.com/") {
+            if let Some(url_end) = line[url_start..].find(" (") {
+                let url = &line[url_start..url_start + url_end];
+                colored_line = colored_line.replace(url, &format!("{}", url.blue().underline()));
+            }
+        }
+        
+        result.push_str(&colored_line);
+        result.push('\n');
+    }
+    
+    result.trim_end().to_string()
 }
 
 fn find_git_directory() -> Result<PathBuf> {
