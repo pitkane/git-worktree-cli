@@ -16,3 +16,9 @@ jobs:
 
     - name: Check that code can compile
       run: cargo check 
+
+    - name: Check that tests pass
+      run: cargo test
+
+    - name: Check that build works
+      run: cargo build --release
