@@ -74,9 +74,8 @@ The project includes a flexible hooks system that allows users to run custom com
 
 ### Available Hooks
 
-- **`postInit`**: Executed after `gwtinit` creates a new project
-- **`postAdd`**: Executed after `gwtadd` creates a new worktree
-- **`postRemove`**: Executed after `gwtremove` removes a worktree
+- **`postAdd`**: Executed after `gwt add` creates a new worktree
+- **`postRemove`**: Executed after `gwt remove` removes a worktree
 
 ### Variable Substitution
 
@@ -94,8 +93,6 @@ hooks:
     - "# npm install"
   postRemove:
     - "# echo 'Removed worktree for branch ${branchName}'"
-  postInit:
-    - "# echo 'Initialized git worktree project'"
 ```
 
 ### Active Configuration Example
@@ -110,8 +107,6 @@ hooks:
     - "npm run init"
   postRemove:
     - "echo 'Removed worktree for branch ${branchName}'"
-  postInit:
-    - "echo 'Initialized git worktree project'"
 ```
 
 ### Hook Behavior
@@ -119,7 +114,7 @@ hooks:
 - **Real-time output**: Commands stream output live using `execSync` with `stdio: 'inherit'`
 - **Execution context**: 
   - `postAdd`: Execute in the worktree directory
-  - `postRemove`/`postInit`: Execute in the project root directory
+  - `postRemove`: Execute in the project root directory
 - **Comment handling**: Lines starting with `#` are automatically skipped
 - **Error handling**: Failed hooks show warnings but don't stop execution
 - **Sequential execution**: Hooks run in the order they're defined
@@ -153,7 +148,6 @@ hooks:
    - ✅ Detects the default branch name
    - ✅ Renames the cloned directory to match the branch name
    - ✅ Creates `git-worktree-config.yaml` with repository metadata
-   - ✅ Executes post-init hooks with streaming output
 
 2. **`gwt list`**: Display all worktrees in a formatted table ✅
    - ✅ Finds worktrees in project directory
@@ -291,3 +285,43 @@ Example of embedded completion:
 ```rust
 const BASH_COMPLETION: &str = include_str!(concat!(env!("OUT_DIR"), "/completions/gwt.bash"));
 ```
+
+### Secure Credential Management
+
+The application uses the system keyring for secure credential storage:
+
+```rust
+use keyring::Entry;
+
+// Store credentials securely
+let entry = Entry::new("gwt", &username)?;
+entry.set_password(&token)?;
+
+// Retrieve credentials
+let password = entry.get_password()?;
+```
+
+**Security features:**
+- **No plaintext storage**: All credentials encrypted by OS
+- **Per-user isolation**: Credentials tied to user account
+- **Cross-platform**: Works on Windows, macOS, and Linux
+- **Automatic cleanup**: Credentials can be easily removed
+
+## Provider URLs and Authentication
+
+### GitHub
+- **URL patterns**: `github.com`, `git@github.com:`
+- **Authentication**: GitHub CLI (`gh auth login`)
+- **API**: Uses `gh pr list` command for PR information
+
+### Bitbucket Cloud
+- **URL patterns**: `bitbucket.org`
+- **Authentication**: OAuth app passwords via interactive setup
+- **API**: Direct REST API calls to `api.bitbucket.org`
+- **Credentials**: Stored in system keyring as `gwt-bitbucket-cloud`
+
+### Bitbucket Data Center
+- **URL patterns**: Custom domains (detected by elimination)
+- **Authentication**: Personal access tokens via interactive setup
+- **API**: REST API calls to custom Bitbucket instance
+- **Credentials**: Stored in system keyring as `gwt-bitbucket-datacenter`

@@ -78,13 +78,9 @@ Pre-built binaries will be available for:
 - Linux (x86_64 & ARM64)
 - Windows
 
-### Option 3: Use Legacy TypeScript Version
-The original TypeScript implementation is available in the `typescript-version/` directory:
+### Option 3: Install via Cargo (Coming Soon)
 ```bash
-cd typescript-version
-pnpm install
-pnpm initialize
-source ~/.zshrc
+cargo install gwt
 ```
 
 ## Quick Start Workflow
@@ -94,9 +90,13 @@ source ~/.zshrc
 # Clone and setup worktree structure with REAL-TIME OUTPUT!
 gwt init git@github.com:username/repo.git
 
+# Or specify a provider explicitly:
+gwt init https://bitbucket.org/workspace/repo.git --provider bitbucket-cloud
+gwt init https://bitbucket.company.com/scm/proj/repo.git --provider bitbucket-data-center
+
 # This creates:
 # - main/ directory (or master/ based on default branch)
-# - git-worktree-config.yaml (project metadata)
+# - git-worktree-config.yaml (project metadata with provider info)
 # You'll see git clone progress in real-time!
 ```
 
@@ -183,6 +183,7 @@ gwt remove hotfix/payment-bug
 | `gwt completions` | Check completion status | `gwt completions` | ✅ **Working** |
 | `gwt completions install [shell]` | Auto-install completions | `gwt completions install` | ✅ **Working** |
 | `gwt completions generate <shell>` | Generate completions | `gwt completions generate zsh` | ✅ **Working** |
+| `gwt auth <provider>` | Manage authentication for providers | `gwt auth github` | ✅ **Working** |
 
 **New in Rust version:**
 - ✅ **Real-time streaming output** - See git clone progress live!
@@ -192,7 +193,9 @@ gwt remove hotfix/payment-bug
 - ✅ **Smart completions** - Auto-detect shell and install with one command
 - ✅ **Better performance** - Compiled Rust vs interpreted TypeScript
 - ✅ **Sharp table output** - Clean, modern table formatting with proper column alignment
-- ✅ **GitHub PR integration** - See pull request status and links in colorized output
+- ✅ **Multi-provider support** - Works with GitHub, Bitbucket Cloud, and Bitbucket Data Center
+- ✅ **Comprehensive PR integration** - See pull request status across all providers
+- ✅ **Secure authentication** - Keyring-based credential storage for Bitbucket
 
 ## Hooks & Automation
 
@@ -228,7 +231,6 @@ gwt add feature/shopping-cart
 ```
 
 ### Available Hook Types
-- **`postInit`**: After creating a new project
 - **`postAdd`**: After creating a new worktree (perfect for setup)
 - **`postRemove`**: After removing a worktree (great for cleanup)
 
@@ -239,23 +241,49 @@ hooks:
   postAdd:
     - "echo 'Created ${branchName} at ${worktreePath}'"
     - "npm install"
+  postRemove:
+    - "echo 'Removed worktree for branch ${branchName}'"
 ```
 
 By default, all hooks are commented out (disabled) - uncomment the ones you want to use.
 
-## GitHub Integration
+## Pull Request Integration
 
-View GitHub pull request information directly in your worktree list!
+View pull request information directly in your worktree list across multiple providers!
 
-### Setup GitHub Authentication
+### Supported Providers
+
+- **GitHub** - Using the GitHub CLI (`gh`)
+- **Bitbucket Cloud** - OAuth-based authentication
+- **Bitbucket Data Center** - Personal access token authentication
+
+### Setup Authentication
+
+#### GitHub
 ```bash
-# Authenticate with GitHub using the gh CLI (one-time setup)
-gh auth login
+# Check GitHub auth status
+gwt auth github
 
-# This will:
-# 1. Open your browser to GitHub
-# 2. Display a code to enter
-# 3. Save your authentication securely
+# If not authenticated, use gh CLI:
+gh auth login
+```
+
+#### Bitbucket Cloud
+```bash
+# Setup Bitbucket Cloud authentication
+gwt auth bitbucket-cloud setup
+
+# Test the connection
+gwt auth bitbucket-cloud test
+```
+
+#### Bitbucket Data Center (On-Premise)
+```bash
+# Setup Bitbucket Data Center authentication
+gwt auth bitbucket-data-center setup
+
+# Test the connection
+gwt auth bitbucket-data-center test
 ```
 
 ### View PR Status
@@ -263,15 +291,19 @@ gh auth login
 # List worktrees with PR info (requires gh CLI authentication)
 gwt list
 
-# Shows PR URL and status for each branch
+# Shows PR URL and status for each branch across all providers
 # ┌───────────────────┬───────────────────────────────────────────────────────────┐
 # │ BRANCH            │ PULL REQUEST                                              │
 # ├───────────────────┼───────────────────────────────────────────────────────────┤
 # │ main              │ -                                                         │
-# │ feature/new-ui    │ https://github.com/owner/repo/pull/123 (open)             │
-# │ fix/memory-leak   │ https://github.com/owner/repo/pull/122 (draft)            │
-# │ hotfix/security   │ https://github.com/owner/repo/pull/121 (merged)           │
+# │ feature/new-ui    │ #123: Implement new UI design (open)                      │
+# │ fix/memory-leak   │ #122: Fix memory leak in parser (draft)                   │
+# │ hotfix/security   │ #121: Security patch for auth (merged)                    │
 # └───────────────────┴───────────────────────────────────────────────────────────┘
+# 
+# PRs without local worktrees:
+# • #125: Add dark mode support (open)
+# • #124: Update dependencies (draft)
 ```
 
 **Pull Request Status Colors:**
@@ -281,9 +313,18 @@ gwt list
 - 🔴 **closed** - Closed without merging
 
 ### Requirements
+
+#### For GitHub:
 - Install [GitHub CLI](https://cli.github.com/) (`gh`)
 - Authenticate with `gh auth login`
-- Repository must be hosted on GitHub
+
+#### For Bitbucket Cloud:
+- OAuth app password (created in Bitbucket settings)
+- Repository access permissions
+
+#### For Bitbucket Data Center:
+- Personal access token
+- Network access to your Bitbucket instance
 
 ## Benefits
 
@@ -295,7 +336,9 @@ gwt list
 - **🪝 Smart Automation**: Hooks automatically run setup/cleanup tasks
 - **📊 Real-time Feedback**: See command output as it executes
 - **🎯 Tab Completion**: Branch names auto-complete for add/remove commands
-- **🔗 GitHub Integration**: View pull request status directly in worktree list
+- **🔗 Multi-Provider Support**: Works with GitHub, Bitbucket Cloud, and Bitbucket Data Center
+- **🔐 Secure Authentication**: Credentials stored securely in system keyring
+- **📋 PR Overview**: See all pull requests, even those without local worktrees
 
 ## Requirements
 
