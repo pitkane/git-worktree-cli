@@ -137,47 +137,80 @@ fn parse_worktree_list(output: &str) -> Result<Vec<Worktree>> {
         bare: bool,
     }
 
-    for line in output.lines() {
-        if line.starts_with("worktree ") {
-            if let Some(wt) = current_worktree.take() {
-                if let (Some(path), Some(head)) = (wt.path, wt.head) {
-                    worktrees.push(Worktree {
-                        path,
-                        head,
-                        branch: wt.branch,
-                        bare: wt.bare,
-                    });
-                }
-            }
-            current_worktree = Some(PartialWorktree {
-                path: Some(PathBuf::from(&line[9..])),
-                ..Default::default()
-            });
-        } else if line.starts_with("HEAD ") {
-            if let Some(ref mut wt) = current_worktree {
-                wt.head = Some(line[5..].to_string());
-            }
-        } else if line.starts_with("branch ") {
-            if let Some(ref mut wt) = current_worktree {
-                wt.branch = Some(line[7..].to_string());
-            }
-        } else if line == "bare" {
-            if let Some(ref mut wt) = current_worktree {
-                wt.bare = true;
+    impl PartialWorktree {
+        fn into_worktree(self) -> Option<Worktree> {
+            match (self.path, self.head) {
+                (Some(path), Some(head)) => Some(Worktree {
+                    path,
+                    head,
+                    branch: self.branch,
+                    bare: self.bare,
+                }),
+                _ => None,
             }
         }
     }
 
+    for line in output.lines() {
+        match parse_worktree_line(line) {
+            WorktreeLine::New(path) => {
+                if let Some(wt) = current_worktree.take() {
+                    if let Some(worktree) = wt.into_worktree() {
+                        worktrees.push(worktree);
+                    }
+                }
+                current_worktree = Some(PartialWorktree {
+                    path: Some(path),
+                    ..Default::default()
+                });
+            }
+            WorktreeLine::Head(head) => {
+                if let Some(ref mut wt) = current_worktree {
+                    wt.head = Some(head);
+                }
+            }
+            WorktreeLine::Branch(branch) => {
+                if let Some(ref mut wt) = current_worktree {
+                    wt.branch = Some(branch);
+                }
+            }
+            WorktreeLine::Bare => {
+                if let Some(ref mut wt) = current_worktree {
+                    wt.bare = true;
+                }
+            }
+            WorktreeLine::Other => {}
+        }
+    }
+
+    // Don't forget the last worktree
     if let Some(wt) = current_worktree {
-        if let (Some(path), Some(head)) = (wt.path, wt.head) {
-            worktrees.push(Worktree {
-                path,
-                head,
-                branch: wt.branch,
-                bare: wt.bare,
-            });
+        if let Some(worktree) = wt.into_worktree() {
+            worktrees.push(worktree);
         }
     }
 
     Ok(worktrees)
+}
+
+enum WorktreeLine {
+    New(PathBuf),
+    Head(String),
+    Branch(String),
+    Bare,
+    Other,
+}
+
+fn parse_worktree_line(line: &str) -> WorktreeLine {
+    if let Some(path) = line.strip_prefix("worktree ") {
+        WorktreeLine::New(PathBuf::from(path))
+    } else if let Some(head) = line.strip_prefix("HEAD ") {
+        WorktreeLine::Head(head.to_string())
+    } else if let Some(branch) = line.strip_prefix("branch ") {
+        WorktreeLine::Branch(branch.to_string())
+    } else if line == "bare" {
+        WorktreeLine::Bare
+    } else {
+        WorktreeLine::Other
+    }
 }
