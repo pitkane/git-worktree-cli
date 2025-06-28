@@ -91,6 +91,62 @@ impl GitHubClient {
             .collect())
     }
 
+    pub fn get_all_pull_requests(
+        &self,
+        owner: &str,
+        repo: &str,
+    ) -> Result<Vec<(PullRequest, String)>> {
+        // Fetch all open pull requests with branch information
+        let output = std::process::Command::new("gh")
+            .args([
+                "pr",
+                "list",
+                "--repo",
+                &format!("{}/{}", owner, repo),
+                "--state",
+                "open",
+                "--json",
+                "number,title,state,url,isDraft,headRefName",
+                "--limit",
+                "100",
+            ])
+            .output()
+            .context("Failed to execute gh command")?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            if stderr.contains("not authenticated") || stderr.contains("authentication") {
+                return Err(anyhow!(
+                    "GitHub authentication failed. Run 'gh auth login' to authenticate."
+                ));
+            }
+            return Err(anyhow!("Failed to fetch pull requests: {}", stderr));
+        }
+
+        let stdout = String::from_utf8(output.stdout)?;
+        if stdout.trim().is_empty() {
+            return Ok(vec![]);
+        }
+
+        let prs: Vec<serde_json::Value> = serde_json::from_str(&stdout)
+            .context("Failed to parse pull requests from gh output")?;
+
+        Ok(prs
+            .into_iter()
+            .map(|pr| {
+                let pull_request = PullRequest {
+                    number: pr["number"].as_u64().unwrap_or(0) as u32,
+                    title: pr["title"].as_str().unwrap_or("").to_string(),
+                    state: pr["state"].as_str().unwrap_or("").to_string(),
+                    html_url: pr["url"].as_str().unwrap_or("").to_string(),
+                    draft: pr["isDraft"].as_bool().unwrap_or(false),
+                };
+                let branch = pr["headRefName"].as_str().unwrap_or("").to_string();
+                (pull_request, branch)
+            })
+            .collect())
+    }
+
     pub fn parse_github_url(url: &str) -> Option<(String, String)> {
         // Parse both HTTPS and SSH URLs
         if let Some(captures) = url.strip_prefix("https://github.com/") {
