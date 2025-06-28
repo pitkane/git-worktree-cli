@@ -56,35 +56,23 @@ pub async fn run() -> Result<()> {
                     }
                 }
                 "bitbucket-data-center" => {
-                    // First try to extract info from URL if it's a proper Bitbucket Data Center URL
-                    if let Some((base_url, project_key, repo_slug)) = bitbucket_data_center_api::extract_bitbucket_data_center_info_from_url(repo_url) {
+                    // Always use get_auth_from_config for bitbucket-data-center since it can derive the API URL
+                    if let Ok((base_url, project_key, repo_slug)) = bitbucket_data_center_auth::get_auth_from_config() {
                         if let Ok(auth) = bitbucket_data_center_auth::BitbucketDataCenterAuth::new(
                             project_key.clone(), 
                             repo_slug.clone(), 
                             base_url.clone()
                         ) {
                             if auth.get_token().is_ok() {
-                                bitbucket_data_center_client = Some(bitbucket_data_center_api::BitbucketDataCenterClient::new(auth, base_url.clone()));
+                                bitbucket_data_center_client = Some(bitbucket_data_center_api::BitbucketDataCenterClient::new(auth, base_url));
                             }
                         }
                         (Some(github_client), None, bitbucket_data_center_client, Some(("bitbucket-data-center".to_string(), project_key, repo_slug)))
                     } else {
-                        // If URL doesn't match Bitbucket Data Center pattern (e.g., GitHub URL with --provider bitbucket-data-center),
-                        // extract repo info from the URL for repository identification
+                        // Could not get auth config - extract repo info for display but no client
                         let (owner, repo) = github::GitHubClient::parse_github_url(repo_url)
                             .unwrap_or_else(|| ("".to_string(), "".to_string()));
                         if !owner.is_empty() && !repo.is_empty() {
-                            // Check if we have a token configured (the auth system uses env var)
-                            if let Ok(auth) = bitbucket_data_center_auth::BitbucketDataCenterAuth::new(
-                                owner.clone(), 
-                                repo.clone(), 
-                                "".to_string() // base_url not needed for token check
-                            ) {
-                                if auth.get_token().is_ok() {
-                                    // We have a token but need to show user that base URL is required
-                                    // For now, just indicate that bitbucket-data-center is configured but no client available
-                                }
-                            }
                             (Some(github_client), None, None, Some(("bitbucket-data-center".to_string(), owner, repo)))
                         } else {
                             (Some(github_client), None, None, None)
