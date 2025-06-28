@@ -20,81 +20,14 @@ pub fn run(branch_name: Option<&str>) -> Result<()> {
     }
     
     // Find the worktree to remove
-    let target_worktree = match branch_name {
-        None => {
-            // No parameter given, remove current worktree
-            let current_dir = std::env::current_dir()?;
-            worktrees.iter().find(|wt| {
-                current_dir.starts_with(&wt.path)
-            }).ok_or_else(|| {
-                anyhow::anyhow!("Not in a git worktree. Please specify a branch to remove.")
-            })?
-        }
-        Some(target_branch) => {
-            // Find worktree by branch name
-            let found = worktrees.iter().find(|wt| {
-                wt.branch.as_ref().map(|b| {
-                    let clean_branch = if b.starts_with("refs/heads/") {
-                        &b[11..]
-                    } else {
-                        b
-                    };
-                    clean_branch == target_branch
-                }).unwrap_or(false)
-            });
-            
-            if let Some(worktree) = found {
-                worktree
-            } else {
-                // Try to find by path (last part of path)
-                let found_by_path = worktrees.iter().find(|wt| {
-                    wt.path.file_name()
-                        .and_then(|name| name.to_str())
-                        .map(|name| name == target_branch)
-                        .unwrap_or(false)
-                });
-                
-                if let Some(worktree) = found_by_path {
-                    worktree
-                } else {
-                    println!("{}", format!("Error: Worktree for '{}' not found.", target_branch).red());
-                    println!("\n{}", "Available worktrees:".yellow());
-                    for worktree in &worktrees {
-                        let branch_display = worktree.branch.as_ref().map(|b| {
-                            if b.starts_with("refs/heads/") {
-                                &b[11..]
-                            } else {
-                                b
-                            }
-                        }).unwrap_or_else(|| {
-                            if worktree.bare {
-                                "(bare)"
-                            } else {
-                                &worktree.head[..8.min(worktree.head.len())]
-                            }
-                        });
-                        println!("  {} -> {}", branch_display.green(), worktree.path.display().to_string().dimmed());
-                    }
-                    bail!("Worktree not found");
-                }
-            }
-        }
-    };
+    let target_worktree = find_target_worktree(&worktrees, branch_name)?;
     
     // Check if this is the bare repository
     if target_worktree.bare {
         bail!("Cannot remove the main (bare) repository.");
     }
     
-    let branch_display = target_worktree.branch.as_ref().map(|b| {
-        if b.starts_with("refs/heads/") {
-            &b[11..]
-        } else {
-            b
-        }
-    }).unwrap_or_else(|| {
-        &target_worktree.head[..8.min(target_worktree.head.len())]
-    });
+    let branch_display = get_branch_display(target_worktree);
     
     // Show what will be removed
     println!("{}", "About to remove worktree:".cyan().bold());
@@ -267,4 +200,80 @@ fn find_project_root(worktree_path: &Path) -> Result<PathBuf> {
     }
     
     bail!("Could not find project root with git-worktree-config.yaml");
+}
+
+fn find_target_worktree<'a>(worktrees: &'a [git::Worktree], branch_name: Option<&str>) -> Result<&'a git::Worktree> {
+    match branch_name {
+        None => find_current_worktree(worktrees),
+        Some(target_branch) => find_worktree_by_branch(worktrees, target_branch),
+    }
+}
+
+fn find_current_worktree(worktrees: &[git::Worktree]) -> Result<&git::Worktree> {
+    let current_dir = std::env::current_dir()?;
+    worktrees.iter()
+        .find(|wt| current_dir.starts_with(&wt.path))
+        .ok_or_else(|| anyhow::anyhow!("Not in a git worktree. Please specify a branch to remove."))
+}
+
+fn find_worktree_by_branch<'a>(worktrees: &'a [git::Worktree], target_branch: &str) -> Result<&'a git::Worktree> {
+    // First try to find by branch name
+    if let Some(worktree) = find_by_branch_name(worktrees, target_branch) {
+        return Ok(worktree);
+    }
+    
+    // Then try to find by path
+    if let Some(worktree) = find_by_path_name(worktrees, target_branch) {
+        return Ok(worktree);
+    }
+    
+    // Not found, show available worktrees
+    show_available_worktrees(worktrees);
+    bail!("Worktree for '{}' not found", target_branch)
+}
+
+fn find_by_branch_name<'a>(worktrees: &'a [git::Worktree], target_branch: &str) -> Option<&'a git::Worktree> {
+    worktrees.iter().find(|wt| {
+        wt.branch.as_ref()
+            .map(|b| clean_branch_name(b) == target_branch)
+            .unwrap_or(false)
+    })
+}
+
+fn find_by_path_name<'a>(worktrees: &'a [git::Worktree], target_branch: &str) -> Option<&'a git::Worktree> {
+    worktrees.iter().find(|wt| {
+        wt.path.file_name()
+            .and_then(|name| name.to_str())
+            .map(|name| name == target_branch)
+            .unwrap_or(false)
+    })
+}
+
+fn show_available_worktrees(worktrees: &[git::Worktree]) {
+    println!("{}", "Error: Worktree not found.".red());
+    println!("\n{}", "Available worktrees:".yellow());
+    
+    for worktree in worktrees {
+        let branch_display = get_branch_display(worktree);
+        println!("  {} -> {}", 
+            branch_display.green(), 
+            worktree.path.display().to_string().dimmed()
+        );
+    }
+}
+
+fn get_branch_display(worktree: &git::Worktree) -> &str {
+    worktree.branch.as_ref()
+        .map(|b| clean_branch_name(b))
+        .unwrap_or_else(|| {
+            if worktree.bare {
+                "(bare)"
+            } else {
+                &worktree.head[..8.min(worktree.head.len())]
+            }
+        })
+}
+
+fn clean_branch_name(branch: &str) -> &str {
+    branch.strip_prefix("refs/heads/").unwrap_or(branch)
 }

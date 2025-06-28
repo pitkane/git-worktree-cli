@@ -5,6 +5,7 @@ use colored::Colorize;
 use tabled::{Table, Tabled, settings::Style};
 
 use crate::{config, git, github, bitbucket_api, bitbucket_auth, bitbucket_data_center_api, bitbucket_data_center_auth};
+use super::list_helpers::{fetch_pr_for_branch, format_pr_display, clean_branch_name};
 
 #[derive(Tabled)]
 struct WorktreeDisplay {
@@ -122,143 +123,40 @@ pub async fn run() -> Result<()> {
     
     // Get local branch names for filtering
     let local_branches: Vec<String> = worktrees.iter()
-        .filter_map(|wt| {
-            wt.branch.as_ref().map(|b| {
-                if b.starts_with("refs/heads/") {
-                    b[11..].to_string()
-                } else {
-                    b.clone()
-                }
-            })
-        })
+        .filter_map(|wt| wt.branch.as_ref().map(|b| clean_branch_name(b)))
         .collect();
     
     // Convert to display format
     let mut display_worktrees: Vec<WorktreeDisplay> = Vec::new();
     
     for wt in &worktrees {
-            let branch = wt.branch.as_ref().map(|b| {
-                // Clean up branch names - remove refs/heads/ prefix
-                if b.starts_with("refs/heads/") {
-                    b[11..].to_string()
-                } else {
-                    b.to_string()
-                }
-            }).unwrap_or_else(|| {
-                if wt.bare {
-                    "(bare)".to_string()
-                } else {
-                    wt.head.chars().take(8).collect()
-                }
-            });
+            let branch = wt.branch.as_ref()
+                .map(|b| clean_branch_name(b))
+                .unwrap_or_else(|| {
+                    if wt.bare {
+                        "(bare)".to_string()
+                    } else {
+                        wt.head.chars().take(8).collect()
+                    }
+                });
             
             // Fetch PR info if available
             let (pull_request, title) = if has_pr_info && !wt.bare && branch != "(bare)" {
                 match &repo_info {
                     Some((platform, owner_or_workspace, repo)) => {
-                        match platform.as_str() {
-                            "github" => {
-                                if let Some(ref client) = github_client {
-                                    match client.get_pull_requests(owner_or_workspace, repo, &branch) {
-                                        Ok(prs) => {
-                                            if prs.is_empty() {
-                                                ("-".to_string(), String::new())
-                                            } else {
-                                                // Show the most recent PR with URL
-                                                let pr = &prs[0];
-                                                let status_text = if pr.draft {
-                                                    "DRAFT"
-                                                } else if pr.state.to_lowercase() == "open" {
-                                                    "OPEN"
-                                                } else if pr.state.to_lowercase() == "closed" {
-                                                    "CLOSED"
-                                                } else if pr.state.to_lowercase() == "merged" {
-                                                    "MERGED"
-                                                } else {
-                                                    &pr.state.to_uppercase()
-                                                };
-                                                (format!("{} ({})", pr.html_url, status_text), pr.title.clone())
-                                            }
-                                        }
-                                        Err(_) => ("?".to_string(), String::new()),
-                                    }
-                                } else {
-                                    ("-".to_string(), String::new())
-                                }
-                            }
-                            "bitbucket-cloud" => {
-                                if let Some(ref client) = bitbucket_client {
-                                    match client.get_pull_requests(owner_or_workspace, repo).await {
-                                        Ok(prs) => {
-                                            // Find PR for this branch
-                                            let branch_pr = prs.iter().find(|pr| {
-                                                pr.source.branch.name == branch
-                                            });
-                                            
-                                            if let Some(pr) = branch_pr {
-                                                let status_text = pr.state.to_uppercase();
-                                                // Extract URL from links
-                                                let url = if let Some(html_link) = pr.links.get("html") {
-                                                    if let Some(href) = html_link.get("href") {
-                                                        href.as_str().unwrap_or("").to_string()
-                                                    } else {
-                                                        format!("PR #{}", pr.id)
-                                                    }
-                                                } else {
-                                                    format!("PR #{}", pr.id)
-                                                };
-                                                (format!("{} ({})", url, status_text), pr.title.clone())
-                                            } else {
-                                                ("-".to_string(), String::new())
-                                            }
-                                        }
-                                        Err(_) => ("?".to_string(), String::new()),
-                                    }
-                                } else {
-                                    ("-".to_string(), String::new())
-                                }
-                            }
-                            "bitbucket-data-center" => {
-                                if let Some(ref client) = bitbucket_data_center_client {
-                                    match client.get_pull_requests(owner_or_workspace, repo).await {
-                                        Ok(prs) => {
-                                            // Find PR for this branch
-                                            let branch_pr = prs.iter().find(|pr| {
-                                                pr.from_ref.display_id == branch
-                                            });
-                                            
-                                            if let Some(pr) = branch_pr {
-                                                let status_text = pr.state.to_uppercase();
-                                                // Extract URL from links
-                                                let url = if let Some(self_link) = pr.links.get("self") {
-                                                    if let Some(links_array) = self_link.as_array() {
-                                                        if let Some(first_link) = links_array.first() {
-                                                            if let Some(href) = first_link.get("href") {
-                                                                href.as_str().unwrap_or("").to_string()
-                                                            } else {
-                                                                format!("PR #{}", pr.id)
-                                                            }
-                                                        } else {
-                                                            format!("PR #{}", pr.id)
-                                                        }
-                                                    } else {
-                                                        format!("PR #{}", pr.id)
-                                                    }
-                                                } else {
-                                                    format!("PR #{}", pr.id)
-                                                };
-                                                (format!("{} ({})", url, status_text), pr.title.clone())
-                                            } else {
-                                                ("-".to_string(), String::new())
-                                            }
-                                        }
-                                        Err(_) => ("?".to_string(), String::new()),
-                                    }
-                                } else {
-                                    ("-".to_string(), String::new())
-                                }
-                            }
-                            _ => ("-".to_string(), String::new()),
+                        let pr_info = fetch_pr_for_branch(
+                            platform,
+                            owner_or_workspace,
+                            repo,
+                            &branch,
+                            &github_client,
+                            &bitbucket_client,
+                            &bitbucket_data_center_client,
+                        ).await;
+                        
+                        match pr_info {
+                            Ok(info) => format_pr_display(info),
+                            Err(_) => ("?".to_string(), String::new()),
                         }
                     }
                     None => ("-".to_string(), String::new()),

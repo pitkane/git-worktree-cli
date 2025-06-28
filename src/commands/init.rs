@@ -80,44 +80,55 @@ fn extract_repo_name(repo_url: &str) -> Result<String> {
 }
 
 fn detect_repository_provider(repo_url: &str, provider: Option<Provider>) -> Result<Provider> {
-    // First, try to auto-detect from URL
-    let auto_detected = if github::GitHubClient::parse_github_url(repo_url).is_some() {
+    let auto_detected = detect_provider_from_url(repo_url);
+    
+    match provider {
+        // Use explicit provider if provided
+        Some(explicit) => {
+            if let Some(detected) = auto_detected {
+                if !providers_match(&detected, &explicit) {
+                    warn_provider_mismatch(&detected, &explicit);
+                }
+            }
+            Ok(explicit)
+        }
+        
+        // Use auto-detected if no explicit provider
+        None => match auto_detected {
+            Some(detected) => Ok(detected),
+            None => Err(create_provider_error(repo_url)),
+        }
+    }
+}
+
+fn detect_provider_from_url(repo_url: &str) -> Option<Provider> {
+    if github::GitHubClient::parse_github_url(repo_url).is_some() {
         Some(Provider::Github)
     } else if bitbucket_api::is_bitbucket_repository(repo_url) {
         Some(Provider::BitbucketCloud)
     } else {
         None
-    };
-    
-    match (auto_detected, provider) {
-        // Auto-detected and no explicit provider given - use auto-detected
-        (Some(detected), None) => Ok(detected),
-        
-        // Auto-detected and explicit provider matches - use it
-        (Some(detected), Some(explicit)) if std::mem::discriminant(&detected) == std::mem::discriminant(&explicit) => {
-            Ok(explicit)
-        }
-        
-        // Auto-detected and explicit provider conflicts - warn but use explicit
-        (Some(detected), Some(explicit)) => {
-            println!("{}", format!("⚠ URL suggests {:?} but --provider {:?} specified. Using {:?}.", 
-                     detected, explicit, explicit).yellow());
-            Ok(explicit)
-        }
-        
-        // Not auto-detected and explicit provider given - use explicit
-        (None, Some(explicit)) => Ok(explicit),
-        
-        // Not auto-detected and no explicit provider - error
-        (None, None) => {
-            Err(anyhow::anyhow!(
-                "Could not detect repository provider from URL: {}\n\
-                 Please specify the provider using --provider:\n\
-                 - For GitHub: --provider github\n\
-                 - For Bitbucket Cloud: --provider bitbucket-cloud\n\
-                 - For Bitbucket Data Center: --provider bitbucket-data-center",
-                repo_url
-            ))
-        }
     }
+}
+
+fn providers_match(a: &Provider, b: &Provider) -> bool {
+    std::mem::discriminant(a) == std::mem::discriminant(b)
+}
+
+fn warn_provider_mismatch(detected: &Provider, explicit: &Provider) {
+    println!("{}", 
+        format!("⚠ URL suggests {:?} but --provider {:?} specified. Using {:?}.", 
+                detected, explicit, explicit).yellow()
+    );
+}
+
+fn create_provider_error(repo_url: &str) -> anyhow::Error {
+    anyhow::anyhow!(
+        "Could not detect repository provider from URL: {}\n\
+         Please specify the provider using --provider:\n\
+         - For GitHub: --provider github\n\
+         - For Bitbucket Cloud: --provider bitbucket-cloud\n\
+         - For Bitbucket Data Center: --provider bitbucket-data-center",
+        repo_url
+    )
 }

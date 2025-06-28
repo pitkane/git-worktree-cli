@@ -3,7 +3,7 @@ use clap_complete::Shell;
 use colored::Colorize;
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 // Include the generated completion files at compile time
 const BASH_COMPLETION: &str = include_str!(concat!(env!("OUT_DIR"), "/completions/gwt.bash"));
@@ -141,51 +141,60 @@ pub fn install_completions_for_shell(shell: Shell) -> Result<()> {
 fn setup_zsh_completions() -> Result<()> {
     let home = env::var("HOME")?;
     let zshrc_path = PathBuf::from(&home).join(".zshrc");
-    let fpath_entry = format!("fpath=({}/.local/share/zsh/site-functions $fpath)", home);
-    let compinit_entry = "autoload -Uz compinit && compinit";
     
-    // Check if .zshrc exists
-    if !zshrc_path.exists() {
-        println!("\n{}: ~/.zshrc does not exist. Creating it...", "Note".yellow());
-        fs::write(&zshrc_path, "")?;
-    }
+    ensure_zshrc_exists(&zshrc_path)?;
     
     let mut content = fs::read_to_string(&zshrc_path)?;
-    let mut modified = false;
+    let modified = add_zsh_completion_config(&mut content, &home)?;
     
-    // Check if fpath entry is already present
-    if !content.contains(&format!("{}/.local/share/zsh/site-functions", home)) {
-        println!("\n✓ Adding completion path to ~/.zshrc");
-        
-        // Add fpath entry
-        if !content.is_empty() && !content.ends_with('\n') {
-            content.push('\n');
-        }
-        content.push_str("\n# Git worktree CLI completions\n");
-        content.push_str(&fpath_entry);
-        content.push('\n');
-        modified = true;
-        
-        // Also add compinit if not present
-        if !content.contains("compinit") {
-            content.push_str(compinit_entry);
-            content.push('\n');
-        }
-    } else {
-        println!("\n✓ Completion path already configured in ~/.zshrc");
-    }
-    
-    // Write back if modified
     if modified {
         fs::write(&zshrc_path, content)?;
         println!("✓ Updated ~/.zshrc");
     }
     
+    show_zsh_activation_instructions();
+    Ok(())
+}
+
+fn ensure_zshrc_exists(zshrc_path: &Path) -> Result<()> {
+    if !zshrc_path.exists() {
+        println!("\n{}: ~/.zshrc does not exist. Creating it...", "Note".yellow());
+        fs::write(zshrc_path, "")?;
+    }
+    Ok(())
+}
+
+fn add_zsh_completion_config(content: &mut String, home: &str) -> Result<bool> {
+    let fpath_dir = format!("{}/.local/share/zsh/site-functions", home);
+    
+    if content.contains(&fpath_dir) {
+        println!("\n✓ Completion path already configured in ~/.zshrc");
+        return Ok(false);
+    }
+    
+    println!("\n✓ Adding completion path to ~/.zshrc");
+    
+    // Ensure proper newline before adding content
+    if !content.is_empty() && !content.ends_with('\n') {
+        content.push('\n');
+    }
+    
+    // Add fpath configuration
+    content.push_str("\n# Git worktree CLI completions\n");
+    content.push_str(&format!("fpath=({} $fpath)\n", fpath_dir));
+    
+    // Add compinit if not present
+    if !content.contains("compinit") {
+        content.push_str("autoload -Uz compinit && compinit\n");
+    }
+    
+    Ok(true)
+}
+
+fn show_zsh_activation_instructions() {
     println!("\nTo activate completions in your current shell, run:");
     println!("  {}", "source ~/.zshrc".cyan());
     println!("\nOr start a new terminal session.");
-    
-    Ok(())
 }
 
 pub fn check_completions_installed(shell: Shell) -> Result<bool> {
