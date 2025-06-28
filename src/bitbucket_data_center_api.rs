@@ -14,6 +14,18 @@ pub struct BitbucketDataCenterUser {
     pub email_address: Option<String>,
     pub id: u64,
     pub slug: String,
+    #[serde(rename = "type")]
+    pub user_type: Option<String>,
+    pub active: Option<bool>,
+    pub links: Option<HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct BitbucketDataCenterAuthor {
+    pub user: BitbucketDataCenterUser,
+    pub role: String,
+    pub approved: bool,
+    pub status: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -21,6 +33,12 @@ pub struct BitbucketDataCenterProject {
     pub key: String,
     pub name: String,
     pub id: u64,
+    pub description: Option<String>,
+    #[serde(rename = "public")]
+    pub is_public: Option<bool>,
+    #[serde(rename = "type")]
+    pub project_type: Option<String>,
+    pub links: Option<HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -29,6 +47,19 @@ pub struct BitbucketDataCenterRepository {
     pub name: String,
     pub id: u64,
     pub project: BitbucketDataCenterProject,
+    pub description: Option<String>,
+    #[serde(rename = "hierarchyId")]
+    pub hierarchy_id: Option<String>,
+    #[serde(rename = "scmId")]
+    pub scm_id: Option<String>,
+    pub state: Option<String>,
+    #[serde(rename = "statusMessage")]
+    pub status_message: Option<String>,
+    pub forkable: Option<bool>,
+    #[serde(rename = "public")]
+    pub is_public: Option<bool>,
+    pub archived: Option<bool>,
+    pub links: Option<HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -46,6 +77,8 @@ pub struct BitbucketDataCenterPullRequestRef {
     pub display_id: String,
     #[serde(rename = "latestCommit")]
     pub latest_commit: String,
+    #[serde(rename = "type")]
+    pub ref_type: String,
     pub repository: BitbucketDataCenterRepository,
 }
 
@@ -58,7 +91,8 @@ pub struct BitbucketDataCenterPullRequest {
     pub state: String,
     pub open: bool,
     pub closed: bool,
-    pub author: BitbucketDataCenterUser,
+    pub draft: Option<bool>,
+    pub author: BitbucketDataCenterAuthor,
     #[serde(rename = "fromRef")]
     pub from_ref: BitbucketDataCenterPullRequestRef,
     #[serde(rename = "toRef")]
@@ -67,12 +101,21 @@ pub struct BitbucketDataCenterPullRequest {
     pub created_date: u64,
     #[serde(rename = "updatedDate")]
     pub updated_date: u64,
+    pub locked: Option<bool>,
+    pub reviewers: Option<Vec<serde_json::Value>>,
+    pub participants: Option<Vec<serde_json::Value>>,
+    pub properties: Option<HashMap<String, serde_json::Value>>,
     pub links: HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct BitbucketDataCenterPullRequestsResponse {
     pub values: Vec<BitbucketDataCenterPullRequest>,
+    pub size: u32,
+    pub limit: u32,
+    #[serde(rename = "isLastPage")]
+    pub is_last_page: bool,
+    pub start: u32,
 }
 
 pub struct BitbucketDataCenterClient {
@@ -99,6 +142,7 @@ impl BitbucketDataCenterClient {
             project_key,
             repo_slug
         );
+
 
         let response = self
             .client
