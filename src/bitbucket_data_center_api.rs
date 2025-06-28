@@ -213,8 +213,20 @@ pub fn extract_bitbucket_data_center_info_from_url(url: &str) -> Option<(String,
         return Some((api_base_url, project.to_string(), repo.to_string()));
     }
     
-    // Pattern for SSH URLs
+    // Pattern for SSH URLs: git@host:project/repo.git
     if let Some(captures) = regex::Regex::new(r"git@([^:]+):([^/]+)/([^/\.]+)")
+        .ok()?
+        .captures(url)
+    {
+        let host = captures.get(1)?.as_str();
+        let project = captures.get(2)?.as_str();
+        let repo = captures.get(3)?.as_str();
+        
+        return Some((format!("https://{}", host), project.to_string(), repo.to_string()));
+    }
+    
+    // Pattern for SSH URLs with protocol: ssh://git@host/project/repo.git
+    if let Some(captures) = regex::Regex::new(r"ssh://git@([^/]+)/([^/]+)/([^/\.]+)")
         .ok()?
         .captures(url)
     {
@@ -274,6 +286,17 @@ mod tests {
             "https://git.acmeorg.com".to_string(),
             "PROJ".to_string(),
             "repo".to_string()
+        )));
+    }
+
+    #[test]
+    fn test_extract_bitbucket_data_center_info_ssh_protocol() {
+        let url = "ssh://git@git.acmeorg.com/PROJECT_ID/REPO_ID.git";
+        let result = extract_bitbucket_data_center_info_from_url(url);
+        assert_eq!(result, Some((
+            "https://git.acmeorg.com".to_string(),
+            "PROJECT_ID".to_string(),
+            "REPO_ID".to_string()
         )));
     }
 

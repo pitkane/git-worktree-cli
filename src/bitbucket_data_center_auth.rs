@@ -30,24 +30,73 @@ impl BitbucketDataCenterAuth {
             })
     }
 
+
+}
+
+fn derive_api_base_url_from_repo_url(repo_url: &str) -> Option<String> {
+    // Extract domain from various URL patterns and construct API base URL
+    
+    // Handle HTTPS URLs like https://github.com/owner/repo.git
+    if let Some(captures) = regex::Regex::new(r"https://([^/]+)")
+        .ok()?
+        .captures(repo_url)
+    {
+        let domain = captures.get(1)?.as_str();
+        return Some(format!("https://{}", domain));
+    }
+    
+    // Handle SSH URLs like git@github.com:owner/repo.git  
+    if let Some(captures) = regex::Regex::new(r"git@([^:]+):")
+        .ok()?
+        .captures(repo_url)
+    {
+        let domain = captures.get(1)?.as_str();
+        return Some(format!("https://{}", domain));
+    }
+    
+    // Handle other SSH formats like ssh://git@domain/path
+    if let Some(captures) = regex::Regex::new(r"ssh://git@([^/]+)")
+        .ok()?
+        .captures(repo_url)
+    {
+        let domain = captures.get(1)?.as_str();
+        return Some(format!("https://{}", domain));
+    }
+    
+    None
 }
 
 pub fn get_auth_from_config() -> Result<(String, String, String)> {
     use crate::config::GitWorktreeConfig;
     use crate::bitbucket_data_center_api::extract_bitbucket_data_center_info_from_url;
+    use crate::github;
     
     let (_, config) = GitWorktreeConfig::find_config()?
         .ok_or_else(|| anyhow::anyhow!("No git-worktree-config.yaml found"))?;
     
-    // Check if this is a Bitbucket Data Center repository (not bitbucket.org)
-    if config.repository_url.contains("bitbucket.org") {
-        return Err(anyhow::anyhow!("This appears to be a Bitbucket Cloud repository, not Bitbucket Data Center"));
+    // Check sourceControl field instead of URL pattern
+    if config.source_control != "bitbucket-data-center" {
+        return Err(anyhow::anyhow!("Repository is not configured for Bitbucket Data Center (sourceControl: {})", config.source_control));
     }
     
-    let (base_url, project_key, repo_slug) = extract_bitbucket_data_center_info_from_url(&config.repository_url)
-        .ok_or_else(|| anyhow::anyhow!("Failed to parse Bitbucket Data Center repository URL"))?;
+    let repo_url = &config.repository_url;
     
-    Ok((base_url, project_key, repo_slug))
+    // First try to extract from actual Bitbucket Data Center URL
+    if let Some((base_url, project_key, repo_slug)) = extract_bitbucket_data_center_info_from_url(repo_url) {
+        return Ok((base_url, project_key, repo_slug));
+    }
+    
+    // If that fails, try to derive from other URL patterns (like GitHub URLs)
+    if let Some((owner, repo)) = github::GitHubClient::parse_github_url(repo_url) {
+        // For GitHub URLs with bitbucket-data-center config, derive API base URL from the domain
+        if let Some(base_url) = derive_api_base_url_from_repo_url(repo_url) {
+            return Ok((base_url, owner, repo));
+        }
+        
+        return Err(anyhow::anyhow!("Failed to derive Bitbucket Data Center base URL from: {}", repo_url));
+    }
+    
+    Err(anyhow::anyhow!("Failed to parse repository URL: {}", repo_url))
 }
 
 pub fn display_setup_instructions() {
