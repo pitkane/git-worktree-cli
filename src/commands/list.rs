@@ -195,19 +195,12 @@ pub async fn run() -> Result<()> {
                             }
                             "bitbucket-data-center" => {
                                 if let Some(ref client) = bitbucket_data_center_client {
-                                    println!("DEBUG: List command calling get_pull_requests with owner_or_workspace: '{}', repo: '{}'", owner_or_workspace, repo);
                                     match client.get_pull_requests(owner_or_workspace, repo).await {
                                         Ok(prs) => {
-                                            println!("DEBUG: List command got {} PRs from API", prs.len());
                                             // Find PR for this branch
-                                            println!("DEBUG: Looking for branch '{}' in PRs", branch);
-                                            for pr in &prs {
-                                                println!("DEBUG: PR #{}: from_ref.display_id='{}' title='{}' author='{}'", pr.id, pr.from_ref.display_id, pr.title, pr.author.user.display_name);
-                                            }
                                             let branch_pr = prs.iter().find(|pr| {
                                                 pr.from_ref.display_id == branch
                                             });
-                                            println!("DEBUG: Found matching PR: {:?}", branch_pr.is_some());
                                             
                                             if let Some(pr) = branch_pr {
                                                 let status_text = pr.state.to_uppercase();
@@ -234,13 +227,9 @@ pub async fn run() -> Result<()> {
                                                 "-".to_string()
                                             }
                                         }
-                                        Err(e) => {
-                                            println!("DEBUG: List command get_pull_requests failed: {}", e);
-                                            "?".to_string()
-                                        },
+                                        Err(_) => "?".to_string(),
                                     }
                                 } else {
-                                    println!("DEBUG: No bitbucket_data_center_client available");
                                     "-".to_string()
                                 }
                             }

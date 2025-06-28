@@ -39,6 +39,12 @@ This file tracks pending tasks and future enhancements for the project.
   - [ ] `gwt add --no-hooks` - Skip hook execution
   - [ ] `gwt remove --force` - Skip confirmation prompts
   - [ ] `gwt remove --keep-branch` - Preserve branch even for feature branches
+- [ ] **Debug logging** - Add `--debug` parameter for troubleshooting:
+  - [ ] API request/response logging for Bitbucket Data Center
+  - [ ] Detailed error messages with context
+  - [ ] Git command execution tracing
+  - [ ] Configuration loading and validation steps
+  - [ ] Hook execution debugging
 - [ ] **Better error messages** - Actionable suggestions for common issues
 - [ ] **Progress indicators** - For long-running operations
 - [ ] **Colored output** - Better visual hierarchy in output
