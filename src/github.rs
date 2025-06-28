@@ -38,15 +38,25 @@ impl GitHubClient {
         Self::get_gh_token().is_some()
     }
 
-    pub fn get_pull_requests(&self, owner: &str, repo: &str, branch: &str) -> Result<Vec<PullRequest>> {
+    pub fn get_pull_requests(
+        &self,
+        owner: &str,
+        repo: &str,
+        branch: &str,
+    ) -> Result<Vec<PullRequest>> {
         // Use gh CLI instead of HTTP API
         let output = std::process::Command::new("gh")
             .args([
-                "pr", "list",
-                "--repo", &format!("{}/{}", owner, repo),
-                "--head", branch,
-                "--state", "all",
-                "--json", "number,title,state,url,isDraft"
+                "pr",
+                "list",
+                "--repo",
+                &format!("{}/{}", owner, repo),
+                "--head",
+                branch,
+                "--state",
+                "all",
+                "--json",
+                "number,title,state,url,isDraft",
             ])
             .output()
             .context("Failed to execute gh command")?;
@@ -54,7 +64,9 @@ impl GitHubClient {
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             if stderr.contains("not authenticated") || stderr.contains("authentication") {
-                return Err(anyhow!("GitHub authentication failed. Run 'gh auth login' to authenticate."));
+                return Err(anyhow!(
+                    "GitHub authentication failed. Run 'gh auth login' to authenticate."
+                ));
             }
             return Err(anyhow!("Failed to fetch pull requests: {}", stderr));
         }
@@ -67,13 +79,16 @@ impl GitHubClient {
         let prs: Vec<serde_json::Value> = serde_json::from_str(&stdout)
             .context("Failed to parse pull requests from gh output")?;
 
-        Ok(prs.into_iter().map(|pr| PullRequest {
-            number: pr["number"].as_u64().unwrap_or(0) as u32,
-            title: pr["title"].as_str().unwrap_or("").to_string(),
-            state: pr["state"].as_str().unwrap_or("").to_string(),
-            html_url: pr["url"].as_str().unwrap_or("").to_string(), // Changed from html_url to url
-            draft: pr["isDraft"].as_bool().unwrap_or(false), // Changed from draft to isDraft
-        }).collect())
+        Ok(prs
+            .into_iter()
+            .map(|pr| PullRequest {
+                number: pr["number"].as_u64().unwrap_or(0) as u32,
+                title: pr["title"].as_str().unwrap_or("").to_string(),
+                state: pr["state"].as_str().unwrap_or("").to_string(),
+                html_url: pr["url"].as_str().unwrap_or("").to_string(), // Changed from html_url to url
+                draft: pr["isDraft"].as_bool().unwrap_or(false), // Changed from draft to isDraft
+            })
+            .collect())
     }
 
     pub fn parse_github_url(url: &str) -> Option<(String, String)> {
@@ -91,11 +106,6 @@ impl GitHubClient {
         }
         None
     }
-
-    pub fn logout() -> Result<()> {
-        println!("To logout from GitHub, run: gh auth logout");
-        Ok(())
-    }
 }
 
 #[cfg(test)]
@@ -105,10 +115,22 @@ mod tests {
     #[test]
     fn test_parse_github_url() {
         let test_cases = vec![
-            ("https://github.com/owner/repo.git", Some(("owner".to_string(), "repo".to_string()))),
-            ("https://github.com/owner/repo", Some(("owner".to_string(), "repo".to_string()))),
-            ("git@github.com:owner/repo.git", Some(("owner".to_string(), "repo".to_string()))),
-            ("git@github.com:owner/repo", Some(("owner".to_string(), "repo".to_string()))),
+            (
+                "https://github.com/owner/repo.git",
+                Some(("owner".to_string(), "repo".to_string())),
+            ),
+            (
+                "https://github.com/owner/repo",
+                Some(("owner".to_string(), "repo".to_string())),
+            ),
+            (
+                "git@github.com:owner/repo.git",
+                Some(("owner".to_string(), "repo".to_string())),
+            ),
+            (
+                "git@github.com:owner/repo",
+                Some(("owner".to_string(), "repo".to_string())),
+            ),
             ("https://gitlab.com/owner/repo", None),
         ];
 

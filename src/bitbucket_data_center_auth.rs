@@ -3,19 +3,11 @@ use std::env;
 
 const TOKEN_ENV_VAR: &str = "BITBUCKET_DATA_CENTER_HTTP_ACCESS_TOKEN";
 
-pub struct BitbucketDataCenterAuth {
-    base_url: String,
-    project_key: String,
-    repo_slug: String,
-}
+pub struct BitbucketDataCenterAuth;
 
 impl BitbucketDataCenterAuth {
-    pub fn new(project_key: String, repo_slug: String, base_url: String) -> Result<Self> {
-        Ok(BitbucketDataCenterAuth {
-            project_key,
-            repo_slug,
-            base_url,
-        })
+    pub fn new(_project_key: String, _repo_slug: String, _base_url: String) -> Result<Self> {
+        Ok(BitbucketDataCenterAuth)
     }
 
     pub fn get_token(&self) -> Result<String> {
@@ -38,17 +30,6 @@ impl BitbucketDataCenterAuth {
             })
     }
 
-    pub fn base_url(&self) -> &str {
-        &self.base_url
-    }
-
-    pub fn project_key(&self) -> &str {
-        &self.project_key
-    }
-
-    pub fn repo_slug(&self) -> &str {
-        &self.repo_slug
-    }
 }
 
 pub fn get_auth_from_config() -> Result<(String, String, String)> {
@@ -99,11 +80,6 @@ mod tests {
             "https://git.acmeorg.com".to_string()
         );
         assert!(auth.is_ok());
-        
-        let auth = auth.unwrap();
-        assert_eq!(auth.project_key(), "PROJECT");
-        assert_eq!(auth.repo_slug(), "repository");
-        assert_eq!(auth.base_url(), "https://git.acmeorg.com");
     }
 
     #[test]
@@ -112,10 +88,7 @@ mod tests {
             "PROJ".to_string(),
             "repo".to_string(),
             "https://git.example.com".to_string()
-        ).unwrap();
-        
-        assert_eq!(auth.project_key(), "PROJ");
-        assert_eq!(auth.repo_slug(), "repo");
-        assert_eq!(auth.base_url(), "https://git.example.com");
+        );
+        assert!(auth.is_ok());
     }
 }

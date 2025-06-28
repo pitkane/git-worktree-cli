@@ -73,13 +73,6 @@ pub struct BitbucketDataCenterPullRequest {
 #[derive(Debug, Deserialize)]
 pub struct BitbucketDataCenterPullRequestsResponse {
     pub values: Vec<BitbucketDataCenterPullRequest>,
-    pub size: u32,
-    pub limit: u32,
-    pub start: u32,
-    #[serde(rename = "isLastPage")]
-    pub is_last_page: bool,
-    #[serde(rename = "nextPageStart")]
-    pub next_page_start: Option<u32>,
 }
 
 pub struct BitbucketDataCenterClient {
@@ -235,18 +228,6 @@ pub fn extract_bitbucket_data_center_info_from_url(url: &str) -> Option<(String,
     None
 }
 
-pub fn is_bitbucket_data_center_repository(remote_url: &str, base_url: Option<&str>) -> bool {
-    // If base_url is provided, check if the remote_url contains it
-    if let Some(base) = base_url {
-        return remote_url.contains(base);
-    }
-    
-    // Otherwise, check for common Data Center patterns (excluding bitbucket.org which is Cloud)
-    !remote_url.contains("bitbucket.org") && 
-    (remote_url.contains("/scm/") || 
-     remote_url.contains("/projects/") ||
-     (remote_url.starts_with("git@") && !remote_url.contains("bitbucket.org")))
-}
 
 #[cfg(test)]
 mod tests {
@@ -303,21 +284,4 @@ mod tests {
         assert_eq!(result, None);
     }
 
-    #[test]
-    fn test_is_bitbucket_data_center_repository() {
-        // Should match Data Center patterns
-        assert!(is_bitbucket_data_center_repository("https://git.acmeorg.com/scm/PROJ/repo", None));
-        assert!(is_bitbucket_data_center_repository("https://git.acmeorg.com/projects/PROJ/repos/repo", None));
-        assert!(is_bitbucket_data_center_repository("git@git.acmeorg.com:PROJ/repo.git", None));
-        
-        // Should not match Bitbucket Cloud
-        assert!(!is_bitbucket_data_center_repository("https://bitbucket.org/workspace/repo", None));
-        assert!(!is_bitbucket_data_center_repository("git@bitbucket.org:workspace/repo.git", None));
-        
-        // Should not match GitHub
-        assert!(!is_bitbucket_data_center_repository("https://github.com/user/repo", None));
-        
-        // Should match with specific base URL
-        assert!(is_bitbucket_data_center_repository("https://git.acmeorg.com/scm/PROJ/repo", Some("git.acmeorg.com")));
-    }
 }

@@ -66,12 +66,25 @@ pub enum BitbucketDataCenterAuthAction {
     Test,
 }
 
+#[derive(clap::ValueEnum, Clone, Debug)]
+pub enum Provider {
+    /// GitHub repository
+    Github,
+    /// Bitbucket Cloud repository
+    BitbucketCloud,
+    /// Bitbucket Data Center repository
+    BitbucketDataCenter,
+}
+
 #[derive(Subcommand)]
 pub enum Commands {
     /// Initialize a new worktree project from a repository URL
     Init {
         /// The repository URL to clone
         repo_url: String,
+        /// Repository provider (required for unknown URLs)
+        #[arg(long, value_enum)]
+        provider: Option<Provider>,
     },
 
     /// Add a new worktree for a branch

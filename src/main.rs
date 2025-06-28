@@ -22,8 +22,8 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Init { repo_url } => {
-            init::run(&repo_url)?;
+        Commands::Init { repo_url, provider } => {
+            init::run(&repo_url, provider)?;
         }
         Commands::Add { branch_name } => {
             add::run(&branch_name)?;

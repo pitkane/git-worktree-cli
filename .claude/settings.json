@@ -4,9 +4,11 @@
 			"Bash(cargo:*)",
 			"Bash(./target/debug/gwt:*)",
 			"Bash(../target/debug/gwt:*)",
+			"Bash(./target/release/gwt:*)",
 			"Bash(mkdir:*)",
 			"Bash(git:*)",
-			"Bash(cat:*)"
+			"Bash(cat:*)",
+			"Bash(ls:*)"
 		],
 		"deny": []
 	}

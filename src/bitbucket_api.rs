@@ -52,10 +52,6 @@ pub struct BitbucketPullRequest {
 #[derive(Debug, Deserialize)]
 pub struct BitbucketPullRequestsResponse {
     pub values: Vec<BitbucketPullRequest>,
-    pub page: Option<u32>,
-    pub pagelen: Option<u32>,
-    pub size: Option<u32>,
-    pub next: Option<String>,
 }
 
 pub struct BitbucketClient {
