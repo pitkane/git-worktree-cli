@@ -12,6 +12,18 @@ struct WorktreeDisplay {
     branch: String,
     #[tabled(rename = "PULL REQUEST")]
     pull_request: String,
+    #[tabled(rename = "TITLE")]
+    title: String,
+}
+
+#[derive(Tabled)]
+struct PullRequestDisplay {
+    #[tabled(rename = "BRANCH")]
+    branch: String,
+    #[tabled(rename = "PULL REQUEST")]
+    pull_request: String,
+    #[tabled(rename = "TITLE")]
+    title: String,
 }
 
 #[tokio::main]
@@ -108,16 +120,29 @@ pub async fn run() -> Result<()> {
         None => false,
     };
     
+    // Get local branch names for filtering
+    let local_branches: Vec<String> = worktrees.iter()
+        .filter_map(|wt| {
+            wt.branch.as_ref().map(|b| {
+                if b.starts_with("refs/heads/") {
+                    b[11..].to_string()
+                } else {
+                    b.clone()
+                }
+            })
+        })
+        .collect();
+    
     // Convert to display format
     let mut display_worktrees: Vec<WorktreeDisplay> = Vec::new();
     
-    for wt in worktrees {
-            let branch = wt.branch.map(|b| {
+    for wt in &worktrees {
+            let branch = wt.branch.as_ref().map(|b| {
                 // Clean up branch names - remove refs/heads/ prefix
                 if b.starts_with("refs/heads/") {
                     b[11..].to_string()
                 } else {
-                    b
+                    b.to_string()
                 }
             }).unwrap_or_else(|| {
                 if wt.bare {
@@ -128,7 +153,7 @@ pub async fn run() -> Result<()> {
             });
             
             // Fetch PR info if available
-            let pull_request = if has_pr_info && !wt.bare && branch != "(bare)" {
+            let (pull_request, title) = if has_pr_info && !wt.bare && branch != "(bare)" {
                 match &repo_info {
                     Some((platform, owner_or_workspace, repo)) => {
                         match platform.as_str() {
@@ -137,7 +162,7 @@ pub async fn run() -> Result<()> {
                                     match client.get_pull_requests(owner_or_workspace, repo, &branch) {
                                         Ok(prs) => {
                                             if prs.is_empty() {
-                                                "-".to_string()
+                                                ("-".to_string(), String::new())
                                             } else {
                                                 // Show the most recent PR with URL
                                                 let pr = &prs[0];
@@ -152,13 +177,13 @@ pub async fn run() -> Result<()> {
                                                 } else {
                                                     &pr.state.to_uppercase()
                                                 };
-                                                format!("{} ({})", pr.html_url, status_text)
+                                                (format!("{} ({})", pr.html_url, status_text), pr.title.clone())
                                             }
                                         }
-                                        Err(_) => "?".to_string(),
+                                        Err(_) => ("?".to_string(), String::new()),
                                     }
                                 } else {
-                                    "-".to_string()
+                                    ("-".to_string(), String::new())
                                 }
                             }
                             "bitbucket-cloud" => {
@@ -182,15 +207,15 @@ pub async fn run() -> Result<()> {
                                                 } else {
                                                     format!("PR #{}", pr.id)
                                                 };
-                                                format!("{} ({})", url, status_text)
+                                                (format!("{} ({})", url, status_text), pr.title.clone())
                                             } else {
-                                                "-".to_string()
+                                                ("-".to_string(), String::new())
                                             }
                                         }
-                                        Err(_) => "?".to_string(),
+                                        Err(_) => ("?".to_string(), String::new()),
                                     }
                                 } else {
-                                    "-".to_string()
+                                    ("-".to_string(), String::new())
                                 }
                             }
                             "bitbucket-data-center" => {
@@ -222,40 +247,90 @@ pub async fn run() -> Result<()> {
                                                 } else {
                                                     format!("PR #{}", pr.id)
                                                 };
-                                                format!("{} ({})", url, status_text)
+                                                (format!("{} ({})", url, status_text), pr.title.clone())
                                             } else {
-                                                "-".to_string()
+                                                ("-".to_string(), String::new())
                                             }
                                         }
-                                        Err(_) => "?".to_string(),
+                                        Err(_) => ("?".to_string(), String::new()),
                                     }
                                 } else {
-                                    "-".to_string()
+                                    ("-".to_string(), String::new())
                                 }
                             }
-                            _ => "-".to_string(),
+                            _ => ("-".to_string(), String::new()),
                         }
                     }
-                    None => "-".to_string(),
+                    None => ("-".to_string(), String::new()),
                 }
             } else {
-                "-".to_string()
+                ("-".to_string(), String::new())
             };
             
             display_worktrees.push(WorktreeDisplay {
                 branch,
                 pull_request,
+                title,
             });
     }
     
-    // Create and display the table
-    let mut table = Table::new(display_worktrees);
-    table.with(Style::sharp());
+    // Display local worktrees table
+    if !display_worktrees.is_empty() {
+        println!("{}", "Local Worktrees:".bold());
+        let mut table = Table::new(&display_worktrees);
+        table.with(Style::sharp());
+        let table_string = table.to_string();
+        let colored_table = apply_colors_to_table(&table_string);
+        println!("{}", colored_table);
+    }
     
-    // Apply coloring to the table output
-    let table_string = table.to_string();
-    let colored_table = apply_colors_to_table(&table_string);
-    println!("{}", colored_table);
+    // Fetch all open pull requests and add ones that don't have local worktrees
+    let mut remote_prs: Vec<PullRequestDisplay> = Vec::new();
+    
+    if has_pr_info {
+        match &repo_info {
+            Some((platform, owner_or_workspace, repo)) => {
+                match platform.as_str() {
+                    "github" => {
+                        if let Some(ref client) = github_client {
+                            if let Ok(all_prs) = client.get_all_pull_requests(owner_or_workspace, repo) {
+                                for (pr, branch_name) in all_prs {
+                                    // Skip if we already have a local worktree for this branch
+                                    if !local_branches.contains(&branch_name) {
+                                        let status_text = if pr.draft {
+                                            "DRAFT"
+                                        } else {
+                                            "OPEN"
+                                        };
+                                        remote_prs.push(PullRequestDisplay {
+                                            branch: branch_name,
+                                            pull_request: format!("{} ({})", pr.html_url, status_text),
+                                            title: pr.title.clone(),
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            None => {}
+        }
+    }
+    
+    // Display remote PRs table if any exist
+    if !remote_prs.is_empty() {
+        if !display_worktrees.is_empty() {
+            println!(); // Add spacing between tables
+        }
+        println!("{}", "Open Pull Requests (no local worktree):".bold());
+        let mut table = Table::new(remote_prs);
+        table.with(Style::sharp());
+        let table_string = table.to_string();
+        let colored_table = apply_colors_to_table(&table_string);
+        println!("{}", colored_table);
+    }
     
     if !has_pr_info {
         if let Some((_, config)) = config::GitWorktreeConfig::find_config()? {
