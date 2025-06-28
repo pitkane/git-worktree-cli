@@ -37,15 +37,16 @@ pub enum CompletionAction {
 #[derive(Subcommand)]
 pub enum AuthAction {
     /// Authenticate with GitHub
-    Github {
-        /// Logout and remove stored credentials
-        #[arg(long)]
-        logout: bool,
-    },
+    Github,
     /// Authenticate with Bitbucket Cloud
     BitbucketCloud {
         #[command(subcommand)]
         action: Option<BitbucketCloudAuthAction>,
+    },
+    /// Authenticate with Bitbucket Data Center
+    BitbucketDataCenter {
+        #[command(subcommand)]
+        action: Option<BitbucketDataCenterAuthAction>,
     },
 }
 
@@ -55,8 +56,14 @@ pub enum BitbucketCloudAuthAction {
     Setup,
     /// Test the authentication connection
     Test,
-    /// Remove stored credentials
-    Remove,
+}
+
+#[derive(Subcommand)]
+pub enum BitbucketDataCenterAuthAction {
+    /// Show setup instructions
+    Setup,
+    /// Test the authentication connection
+    Test,
 }
 
 #[derive(Subcommand)]

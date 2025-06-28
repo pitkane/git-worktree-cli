@@ -4,6 +4,8 @@ use colored::Colorize;
 
 mod bitbucket_api;
 mod bitbucket_auth;
+mod bitbucket_data_center_api;
+mod bitbucket_data_center_auth;
 mod cli;
 mod commands;
 mod completions;
@@ -34,11 +36,14 @@ fn main() -> Result<()> {
         }
         Commands::Auth { action } => {
             match action {
-                AuthAction::Github { logout } => {
-                    auth::run(logout)?;
+                AuthAction::Github => {
+                    auth::run()?;
                 }
                 AuthAction::BitbucketCloud { action } => {
                     auth::run_bitbucket_cloud(action)?;
+                }
+                AuthAction::BitbucketDataCenter { action } => {
+                    auth::run_bitbucket_data_center(action)?;
                 }
             }
         }
