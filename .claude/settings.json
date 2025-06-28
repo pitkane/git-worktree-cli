@@ -10,7 +10,8 @@
 			"Bash(git:*)",
 			"Bash(cat:*)",
 			"Bash(ls:*)",
-			"Bash(rg:*)"
+			"Bash(rg:*)",
+			"Bash(grep:*)"
 		],
 		"deny": []
 	}

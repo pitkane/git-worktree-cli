@@ -27,7 +27,6 @@ pub fn execute_hooks(
     let hook_commands = match hook_type {
         "postAdd" => &hooks.post_add,
         "postRemove" => &hooks.post_remove,
-        "postInit" => &hooks.post_init,
         _ => return Ok(()),
     };
 

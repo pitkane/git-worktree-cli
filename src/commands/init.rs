@@ -6,7 +6,6 @@ use colored::Colorize;
 use crate::cli::Provider;
 use crate::config::{GitWorktreeConfig, CONFIG_FILENAME};
 use crate::git;
-use crate::hooks;
 use crate::{github, bitbucket_api};
 
 pub fn run(repo_url: &str, provider: Option<Provider>) -> Result<()> {
@@ -54,16 +53,7 @@ pub fn run(repo_url: &str, provider: Option<Provider>) -> Result<()> {
     println!("{}", format!("✓ Default branch: {}", default_branch).green());
     println!("{}", format!("✓ Config saved to: {}", config_path.display()).green());
     
-    // Execute post-init hooks
-    let final_dir_path = project_root.join(final_dir_name);
-    hooks::execute_hooks(
-        "postInit",
-        &final_dir_path,
-        &[
-            ("branchName", &default_branch),
-            ("worktreePath", final_dir_path.to_str().unwrap()),
-        ]
-    )?;
+    // Post-init hooks removed - no longer needed
     
     Ok(())
 }

@@ -2,8 +2,6 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use serial_test::serial;
 use std::fs;
-use std::path::Path;
-use tempfile::TempDir;
 
 mod test_utils;
 use test_utils::*;
@@ -102,12 +100,9 @@ fn test_gwt_init_hooks_execution() {
         .arg("init")
         .arg("https://github.com/pitkane/git-worktree-cli.git");
 
-    let output = cmd.assert().success();
+    let _output = cmd.assert().success();
 
-    // Check that hooks were executed
-    output
-        .stdout(predicate::str::contains("🪝 Running postInit hooks"))
-        .stdout(predicate::str::contains("Skipping commented hook"));
+    // Post-init hooks removed - no longer testing for them
 
     cleanup_test_env(temp_dir);
 }

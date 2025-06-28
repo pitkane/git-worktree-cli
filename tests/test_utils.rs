@@ -1,4 +1,3 @@
-use std::env;
 use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -38,8 +37,6 @@ hooks:
   - '# npm install'
   postRemove:
   - '# echo ''Removed worktree for branch ${{branchName}}'''
-  postInit:
-  - '# echo ''Initialized git worktree project'''
 "#,
         repo_url, main_branch
     );
