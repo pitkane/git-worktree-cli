@@ -36,45 +36,71 @@ pub async fn run() -> Result<()> {
         if let Some((_, config)) = config::GitWorktreeConfig::find_config()? {
             let repo_url = &config.repository_url;
             
-            // Check if it's a Bitbucket Cloud repository
-            if bitbucket_api::is_bitbucket_repository(repo_url) {
-                if let Some((workspace, repo)) = bitbucket_api::extract_bitbucket_info_from_url(repo_url) {
-                    // Try to get Bitbucket Cloud auth
-                    if let Ok(auth) = bitbucket_auth::BitbucketAuth::new(
-                        workspace.clone(), 
-                        repo.clone(), 
-                        config.bitbucket_email.clone()
-                    ) {
-                        if auth.has_stored_token() {
-                            bitbucket_client = Some(bitbucket_api::BitbucketClient::new(auth));
+            // Use the configured sourceControl instead of URL pattern matching
+            match config.source_control.as_str() {
+                "bitbucket-cloud" => {
+                    if let Some((workspace, repo)) = bitbucket_api::extract_bitbucket_info_from_url(repo_url) {
+                        // Try to get Bitbucket Cloud auth
+                        if let Ok(auth) = bitbucket_auth::BitbucketAuth::new(
+                            workspace.clone(), 
+                            repo.clone(), 
+                            config.bitbucket_email.clone()
+                        ) {
+                            if auth.has_stored_token() {
+                                bitbucket_client = Some(bitbucket_api::BitbucketClient::new(auth));
+                            }
+                        }
+                        (Some(github_client), bitbucket_client, None, Some(("bitbucket-cloud".to_string(), workspace, repo)))
+                    } else {
+                        (Some(github_client), None, None, None)
+                    }
+                }
+                "bitbucket-data-center" => {
+                    // First try to extract info from URL if it's a proper Bitbucket Data Center URL
+                    if let Some((base_url, project_key, repo_slug)) = bitbucket_data_center_api::extract_bitbucket_data_center_info_from_url(repo_url) {
+                        if let Ok(auth) = bitbucket_data_center_auth::BitbucketDataCenterAuth::new(
+                            project_key.clone(), 
+                            repo_slug.clone(), 
+                            base_url.clone()
+                        ) {
+                            if auth.get_token().is_ok() {
+                                bitbucket_data_center_client = Some(bitbucket_data_center_api::BitbucketDataCenterClient::new(auth, base_url.clone()));
+                            }
+                        }
+                        (Some(github_client), None, bitbucket_data_center_client, Some(("bitbucket-data-center".to_string(), project_key, repo_slug)))
+                    } else {
+                        // If URL doesn't match Bitbucket Data Center pattern (e.g., GitHub URL with --provider bitbucket-data-center),
+                        // extract repo info from the URL for repository identification
+                        let (owner, repo) = github::GitHubClient::parse_github_url(repo_url)
+                            .unwrap_or_else(|| ("".to_string(), "".to_string()));
+                        if !owner.is_empty() && !repo.is_empty() {
+                            // Check if we have a token configured (the auth system uses env var)
+                            if let Ok(auth) = bitbucket_data_center_auth::BitbucketDataCenterAuth::new(
+                                owner.clone(), 
+                                repo.clone(), 
+                                "".to_string() // base_url not needed for token check
+                            ) {
+                                if auth.get_token().is_ok() {
+                                    // We have a token but need to show user that base URL is required
+                                    // For now, just indicate that bitbucket-data-center is configured but no client available
+                                }
+                            }
+                            (Some(github_client), None, None, Some(("bitbucket-data-center".to_string(), owner, repo)))
+                        } else {
+                            (Some(github_client), None, None, None)
                         }
                     }
-                    (Some(github_client), bitbucket_client, None, Some(("bitbucket-cloud".to_string(), workspace, repo)))
-                } else {
-                    (Some(github_client), None, None, None)
                 }
-            } else if let Some((base_url, project_key, repo_slug)) = bitbucket_data_center_api::extract_bitbucket_data_center_info_from_url(repo_url) {
-                // Check if it's a Bitbucket Data Center repository
-                if let Ok(auth) = bitbucket_data_center_auth::BitbucketDataCenterAuth::new(
-                    project_key.clone(), 
-                    repo_slug.clone(), 
-                    base_url.clone()
-                ) {
-                    // Check if token is available
-                    if auth.get_token().is_ok() {
-                        bitbucket_data_center_client = Some(bitbucket_data_center_api::BitbucketDataCenterClient::new(auth, base_url.clone()));
+                "github" | _ => {
+                    // Try GitHub
+                    let (owner, repo) = github::GitHubClient::parse_github_url(repo_url)
+                        .unwrap_or_else(|| ("".to_string(), "".to_string()));
+                        
+                    if !owner.is_empty() && !repo.is_empty() {
+                        (Some(github_client), None, None, Some(("github".to_string(), owner, repo)))
+                    } else {
+                        (Some(github_client), None, None, None)
                     }
-                }
-                (Some(github_client), None, bitbucket_data_center_client, Some(("bitbucket-data-center".to_string(), project_key, repo_slug)))
-            } else {
-                // Try GitHub
-                let (owner, repo) = github::GitHubClient::parse_github_url(repo_url)
-                    .unwrap_or_else(|| ("".to_string(), "".to_string()));
-                    
-                if !owner.is_empty() && !repo.is_empty() {
-                    (Some(github_client), None, None, Some(("github".to_string(), owner, repo)))
-                } else {
-                    (Some(github_client), None, None, None)
                 }
             }
         } else {

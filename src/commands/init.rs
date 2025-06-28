@@ -44,7 +44,7 @@ pub fn run(repo_url: &str, provider: Option<Provider>) -> Result<()> {
         .context("Failed to rename directory")?;
     
     // Create configuration file
-    let config = GitWorktreeConfig::new(repo_url.to_string(), default_branch.clone());
+    let config = GitWorktreeConfig::new(repo_url.to_string(), default_branch.clone(), detected_provider);
     let config_path = project_root.join(CONFIG_FILENAME);
     config.save(&config_path)
         .context("Failed to save configuration")?;

@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::cli::Provider;
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GitWorktreeConfig {
@@ -29,12 +31,12 @@ pub struct Hooks {
 }
 
 impl GitWorktreeConfig {
-    pub fn new(repository_url: String, main_branch: String) -> Self {
-        // Detect source control type from URL
-        let source_control = if repository_url.contains("bitbucket.org") {
-            "bitbucket-cloud".to_string()
-        } else {
-            "github".to_string()
+    pub fn new(repository_url: String, main_branch: String, provider: Provider) -> Self {
+        // Convert provider enum to string
+        let source_control = match provider {
+            Provider::Github => "github".to_string(),
+            Provider::BitbucketCloud => "bitbucket-cloud".to_string(),
+            Provider::BitbucketDataCenter => "bitbucket-data-center".to_string(),
         };
         
         Self {
@@ -101,6 +103,7 @@ mod tests {
         let config = GitWorktreeConfig::new(
             "git@github.com:test/repo.git".to_string(),
             "main".to_string(),
+            Provider::Github,
         );
 
         assert_eq!(config.repository_url, "git@github.com:test/repo.git");
@@ -120,11 +123,26 @@ mod tests {
         let config = GitWorktreeConfig::new(
             "https://bitbucket.org/workspace/repo.git".to_string(),
             "main".to_string(),
+            Provider::BitbucketCloud,
         );
 
         assert_eq!(config.repository_url, "https://bitbucket.org/workspace/repo.git");
         assert_eq!(config.main_branch, "main");
         assert_eq!(config.source_control, "bitbucket-cloud");
+        assert_eq!(config.bitbucket_email, None);
+    }
+
+    #[test]
+    fn test_config_creation_bitbucket_data_center() {
+        let config = GitWorktreeConfig::new(
+            "https://bitbucket.company.com/scm/project/repo.git".to_string(),
+            "main".to_string(),
+            Provider::BitbucketDataCenter,
+        );
+
+        assert_eq!(config.repository_url, "https://bitbucket.company.com/scm/project/repo.git");
+        assert_eq!(config.main_branch, "main");
+        assert_eq!(config.source_control, "bitbucket-data-center");
         assert_eq!(config.bitbucket_email, None);
     }
 
@@ -136,6 +154,7 @@ mod tests {
         let original_config = GitWorktreeConfig::new(
             "git@github.com:test/repo.git".to_string(),
             "develop".to_string(),
+            Provider::Github,
         );
 
         // Save config
@@ -157,6 +176,7 @@ mod tests {
         let config = GitWorktreeConfig::new(
             "git@github.com:test/repo.git".to_string(),
             "main".to_string(),
+            Provider::Github,
         );
         config.save(&temp_dir.path().join(CONFIG_FILENAME)).unwrap();
 
