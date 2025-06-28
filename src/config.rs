@@ -192,7 +192,13 @@ mod tests {
         assert_eq!(found_config.main_branch, "main");
 
         // Restore original directory before temp_dir is dropped
-        std::env::set_current_dir(&original_cwd).unwrap();
+        // Use unwrap_or_else to handle case where original_cwd may not exist
+        if original_cwd.exists() {
+            std::env::set_current_dir(&original_cwd).unwrap();
+        } else {
+            // Fallback to a directory that should exist
+            std::env::set_current_dir("/").unwrap();
+        }
     }
 
     #[test]

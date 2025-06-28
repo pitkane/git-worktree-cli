@@ -271,12 +271,16 @@ pub async fn run() -> Result<()> {
     
     if !has_pr_info {
         if let Some((_, config)) = config::GitWorktreeConfig::find_config()? {
-            if bitbucket_api::is_bitbucket_repository(&config.repository_url) {
-                println!("\n{}", "Tip: Run 'gwt auth bitbucket-cloud setup' to enable Bitbucket Cloud pull request information".dimmed());
-            } else if bitbucket_data_center_api::extract_bitbucket_data_center_info_from_url(&config.repository_url).is_some() {
-                println!("\n{}", "Tip: Run 'gwt auth bitbucket-data-center setup' to enable Bitbucket Data Center pull request information".dimmed());
-            } else if github::GitHubClient::parse_github_url(&config.repository_url).is_some() {
-                println!("\n{}", "Tip: Run 'gh auth login' to enable GitHub pull request information".dimmed());
+            match config.source_control.as_str() {
+                "bitbucket-cloud" => {
+                    println!("\n{}", "Tip: Run 'gwt auth bitbucket-cloud setup' to enable Bitbucket Cloud pull request information".dimmed());
+                }
+                "bitbucket-data-center" => {
+                    println!("\n{}", "Tip: Run 'gwt auth bitbucket-data-center setup' to enable Bitbucket Data Center pull request information".dimmed());
+                }
+                "github" | _ => {
+                    println!("\n{}", "Tip: Run 'gh auth login' to enable GitHub pull request information".dimmed());
+                }
             }
         }
     }
