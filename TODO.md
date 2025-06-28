@@ -10,6 +10,10 @@ This file tracks pending tasks and future enhancements for the project.
 
 ### Features  
 - [x] **GitHub PR Integration** - Show GitHub PR status and links in `gwt list` with colors (Dec 2024)
+- [x] **Multi-Provider Support** - Added Bitbucket Cloud and Bitbucket Data Center support (Dec 2024)
+- [x] **Authentication System** - Comprehensive auth management with `gwt auth` commands (Dec 2024)
+- [x] **Secure Credential Storage** - System keyring integration for Bitbucket authentication (Dec 2024)
+- [x] **Enhanced PR Display** - Show PRs without local worktrees, better formatting (Dec 2024)
 
 ## 🎯 High Priority
 
@@ -18,6 +22,7 @@ This file tracks pending tasks and future enhancements for the project.
 - [ ] **Install script** - curl-able install.sh for easy setup like other Rust tools
 - [ ] **Homebrew formula** - Easy macOS installation with auto-completions
 - [ ] **Cargo crates.io** - Publish to Rust package registry
+- [ ] **Documentation updates** - Update all docs to reflect multi-provider support
 
 ## 🔧 Medium Priority  
 
@@ -26,6 +31,8 @@ This file tracks pending tasks and future enhancements for the project.
 - [ ] **`gwt doctor`** - Health check command to diagnose issues
 - [ ] **Cleanup command** - Remove stale worktrees in bulk
 - [ ] **Clone existing worktrees** - Support cloning projects with existing worktrees
+- [ ] **Provider auto-detection** - Better URL parsing and provider detection
+- [ ] **Credential management UI** - Better UX for managing stored credentials
 
 ### Shell Integration
 - [ ] **Directory change on `gwt add`** - Auto-navigate to new worktree
@@ -35,6 +42,7 @@ This file tracks pending tasks and future enhancements for the project.
 
 ### Quality of Life
 - [ ] **Command flags** - Add useful flags to existing commands:
+  - [ ] `gwt init --provider <provider>` - (✅ **Already implemented**)
   - [ ] `gwt add --from <branch>` - Create from specific branch instead of main
   - [ ] `gwt add --no-hooks` - Skip hook execution
   - [ ] `gwt remove --force` - Skip confirmation prompts
@@ -54,7 +62,10 @@ This file tracks pending tasks and future enhancements for the project.
 
 ### Advanced Features
 - [x] **GitHub PR Integration** - Show GitHub PR status in list (✅ **Completed**)
-- [ ] **Bitbucket PR Integration** - Show Bitbucket PR status in list  
+- [x] **Bitbucket PR Integration** - Show Bitbucket PR status in list (✅ **Completed**)
+  - [x] Bitbucket Cloud support with OAuth authentication
+  - [x] Bitbucket Data Center support with personal access tokens
+  - [x] Unified PR display across all providers  
 - [ ] **Filtering** - Filter list by branch pattern, age, status
 - [ ] **Metadata tracking** - Last commit date, creation time
 - [ ] **Enhanced hooks** - Pre-hooks, conditional execution, error handling
@@ -71,6 +82,9 @@ This file tracks pending tasks and future enhancements for the project.
 - [ ] No Windows support tested
 - [ ] Limited error recovery in hook execution
 - [ ] Build warnings from completion generation (cosmetic)
+- [ ] Provider detection could be more robust for edge cases
+- [ ] Error messages for auth failures could be more helpful
+- [ ] No support for custom GitHub Enterprise instances yet
 
 ## 💡 Ideas for Future Consideration
 
