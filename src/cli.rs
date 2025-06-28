@@ -42,6 +42,21 @@ pub enum AuthAction {
         #[arg(long)]
         logout: bool,
     },
+    /// Authenticate with Bitbucket Cloud
+    BitbucketCloud {
+        #[command(subcommand)]
+        action: Option<BitbucketCloudAuthAction>,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum BitbucketCloudAuthAction {
+    /// Show setup instructions
+    Setup,
+    /// Test the authentication connection
+    Test,
+    /// Remove stored credentials
+    Remove,
 }
 
 #[derive(Subcommand)]

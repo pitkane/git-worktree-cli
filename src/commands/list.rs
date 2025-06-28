@@ -4,7 +4,7 @@ use std::fs;
 use colored::Colorize;
 use tabled::{Table, Tabled, settings::Style};
 
-use crate::{config, git, github};
+use crate::{config, git, github, bitbucket_api, bitbucket_auth};
 
 #[derive(Tabled)]
 struct WorktreeDisplay {
@@ -14,7 +14,8 @@ struct WorktreeDisplay {
     pull_request: String,
 }
 
-pub fn run() -> Result<()> {
+#[tokio::main]
+pub async fn run() -> Result<()> {
     // Find a git directory to work with
     let git_dir = find_git_directory()?;
     
@@ -26,21 +27,62 @@ pub fn run() -> Result<()> {
         return Ok(());
     }
     
-    // Try to get GitHub info
-    let github_client = github::GitHubClient::new();
-    let (owner, repo) = if let Some((_, config)) = config::GitWorktreeConfig::find_config()? {
-        github::GitHubClient::parse_github_url(&config.repository_url)
-            .unwrap_or_else(|| ("".to_string(), "".to_string()))
-    } else {
-        ("".to_string(), "".to_string())
+    // Try to get GitHub/Bitbucket info automatically
+    let (github_client, bitbucket_client, repo_info) = {
+        let github_client = github::GitHubClient::new();
+        let mut bitbucket_client: Option<bitbucket_api::BitbucketClient> = None;
+        
+        if let Some((_, config)) = config::GitWorktreeConfig::find_config()? {
+            let repo_url = &config.repository_url;
+            
+            // Check if it's a Bitbucket repository
+            if bitbucket_api::is_bitbucket_repository(repo_url) {
+                if let Some((workspace, repo)) = bitbucket_api::extract_bitbucket_info_from_url(repo_url) {
+                    // Try to get Bitbucket auth
+                    if let Ok(auth) = bitbucket_auth::BitbucketAuth::new(
+                        workspace.clone(), 
+                        repo.clone(), 
+                        config.bitbucket_email.clone()
+                    ) {
+                        if auth.has_stored_token() {
+                            bitbucket_client = Some(bitbucket_api::BitbucketClient::new(auth));
+                        }
+                    }
+                    (Some(github_client), bitbucket_client, Some(("bitbucket-cloud".to_string(), workspace, repo)))
+                } else {
+                    (Some(github_client), None, None)
+                }
+            } else {
+                // Try GitHub
+                let (owner, repo) = github::GitHubClient::parse_github_url(repo_url)
+                    .unwrap_or_else(|| ("".to_string(), "".to_string()));
+                    
+                if !owner.is_empty() && !repo.is_empty() {
+                    (Some(github_client), None, Some(("github".to_string(), owner, repo)))
+                } else {
+                    (Some(github_client), None, None)
+                }
+            }
+        } else {
+            (Some(github_client), None, None)
+        }
     };
     
-    let has_github_info = !owner.is_empty() && !repo.is_empty() && github_client.has_auth();
+    let has_pr_info = repo_info.is_some() && match &repo_info {
+        Some((platform, _, _)) => {
+            match platform.as_str() {
+                "github" => github_client.as_ref().map(|c| c.has_auth()).unwrap_or(false),
+                "bitbucket-cloud" => bitbucket_client.is_some(),
+                _ => false,
+            }
+        }
+        None => false,
+    };
     
     // Convert to display format
-    let display_worktrees: Vec<WorktreeDisplay> = worktrees
-        .into_iter()
-        .map(|wt| {
+    let mut display_worktrees: Vec<WorktreeDisplay> = Vec::new();
+    
+    for wt in worktrees {
             let branch = wt.branch.map(|b| {
                 // Clean up branch names - remove refs/heads/ prefix
                 if b.starts_with("refs/heads/") {
@@ -57,40 +99,85 @@ pub fn run() -> Result<()> {
             });
             
             // Fetch PR info if available
-            let pull_request = if has_github_info && !wt.bare && branch != "(bare)" {
-                match github_client.get_pull_requests(&owner, &repo, &branch) {
-                    Ok(prs) => {
-                        if prs.is_empty() {
-                            "-".to_string()
-                        } else {
-                            // Show the most recent PR with URL
-                            let pr = &prs[0];
-                            let status_text = if pr.draft {
-                                "DRAFT"
-                            } else if pr.state.to_lowercase() == "open" {
-                                "OPEN"
-                            } else if pr.state.to_lowercase() == "closed" {
-                                "CLOSED"
-                            } else if pr.state.to_lowercase() == "merged" {
-                                "MERGED"
-                            } else {
-                                &pr.state.to_uppercase()
-                            };
-                            format!("{} ({})", pr.html_url, status_text)
+            let pull_request = if has_pr_info && !wt.bare && branch != "(bare)" {
+                match &repo_info {
+                    Some((platform, owner_or_workspace, repo)) => {
+                        match platform.as_str() {
+                            "github" => {
+                                if let Some(ref client) = github_client {
+                                    match client.get_pull_requests(owner_or_workspace, repo, &branch) {
+                                        Ok(prs) => {
+                                            if prs.is_empty() {
+                                                "-".to_string()
+                                            } else {
+                                                // Show the most recent PR with URL
+                                                let pr = &prs[0];
+                                                let status_text = if pr.draft {
+                                                    "DRAFT"
+                                                } else if pr.state.to_lowercase() == "open" {
+                                                    "OPEN"
+                                                } else if pr.state.to_lowercase() == "closed" {
+                                                    "CLOSED"
+                                                } else if pr.state.to_lowercase() == "merged" {
+                                                    "MERGED"
+                                                } else {
+                                                    &pr.state.to_uppercase()
+                                                };
+                                                format!("{} ({})", pr.html_url, status_text)
+                                            }
+                                        }
+                                        Err(_) => "?".to_string(),
+                                    }
+                                } else {
+                                    "-".to_string()
+                                }
+                            }
+                            "bitbucket-cloud" => {
+                                if let Some(ref client) = bitbucket_client {
+                                    match client.get_pull_requests(owner_or_workspace, repo).await {
+                                        Ok(prs) => {
+                                            // Find PR for this branch
+                                            let branch_pr = prs.iter().find(|pr| {
+                                                pr.source.branch.name == branch
+                                            });
+                                            
+                                            if let Some(pr) = branch_pr {
+                                                let status_text = pr.state.to_uppercase();
+                                                // Extract URL from links
+                                                let url = if let Some(html_link) = pr.links.get("html") {
+                                                    if let Some(href) = html_link.get("href") {
+                                                        href.as_str().unwrap_or("").to_string()
+                                                    } else {
+                                                        format!("PR #{}", pr.id)
+                                                    }
+                                                } else {
+                                                    format!("PR #{}", pr.id)
+                                                };
+                                                format!("{} ({})", url, status_text)
+                                            } else {
+                                                "-".to_string()
+                                            }
+                                        }
+                                        Err(_) => "?".to_string(),
+                                    }
+                                } else {
+                                    "-".to_string()
+                                }
+                            }
+                            _ => "-".to_string(),
                         }
                     }
-                    Err(_) => "?".to_string(),
+                    None => "-".to_string(),
                 }
             } else {
                 "-".to_string()
             };
             
-            WorktreeDisplay {
+            display_worktrees.push(WorktreeDisplay {
                 branch,
                 pull_request,
-            }
-        })
-        .collect();
+            });
+    }
     
     // Create and display the table
     let mut table = Table::new(display_worktrees);
@@ -101,8 +188,14 @@ pub fn run() -> Result<()> {
     let colored_table = apply_colors_to_table(&table_string);
     println!("{}", colored_table);
     
-    if !has_github_info && !owner.is_empty() && !repo.is_empty() {
-        println!("\n{}", "Tip: Run 'gh auth login' to enable GitHub pull request information".dimmed());
+    if !has_pr_info {
+        if let Some((_, config)) = config::GitWorktreeConfig::find_config()? {
+            if bitbucket_api::is_bitbucket_repository(&config.repository_url) {
+                println!("\n{}", "Tip: Run 'gwt auth bitbucket-cloud setup' to enable Bitbucket pull request information".dimmed());
+            } else if github::GitHubClient::parse_github_url(&config.repository_url).is_some() {
+                println!("\n{}", "Tip: Run 'gh auth login' to enable GitHub pull request information".dimmed());
+            }
+        }
     }
     
     Ok(())
@@ -128,6 +221,11 @@ fn apply_colors_to_table(table_str: &str) -> String {
         
         // Color URLs - find complete URLs and color them
         if let Some(url_start) = line.find("https://github.com/") {
+            if let Some(url_end) = line[url_start..].find(" (") {
+                let url = &line[url_start..url_start + url_end];
+                colored_line = colored_line.replace(url, &format!("{}", url.blue().underline()));
+            }
+        } else if let Some(url_start) = line.find("https://bitbucket.org/") {
             if let Some(url_end) = line[url_start..].find(" (") {
                 let url = &line[url_start..url_start + url_end];
                 colored_line = colored_line.replace(url, &format!("{}", url.blue().underline()));

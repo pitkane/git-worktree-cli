@@ -2,6 +2,8 @@ use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 
+mod bitbucket_api;
+mod bitbucket_auth;
 mod cli;
 mod commands;
 mod completions;
@@ -34,6 +36,9 @@ fn main() -> Result<()> {
             match action {
                 AuthAction::Github { logout } => {
                     auth::run(logout)?;
+                }
+                AuthAction::BitbucketCloud { action } => {
+                    auth::run_bitbucket_cloud(action)?;
                 }
             }
         }
