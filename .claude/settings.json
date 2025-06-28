@@ -1,0 +1,13 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(cargo:*)",
+			"Bash(./target/debug/gwt:*)",
+			"Bash(../target/debug/gwt:*)",
+			"Bash(mkdir:*)",
+			"Bash(git:*)",
+			"Bash(cat:*)"
+		],
+		"deny": []
+	}
+}

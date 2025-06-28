@@ -12,6 +12,8 @@ pub struct GitWorktreeConfig {
     pub created_at: DateTime<Utc>,
     pub source_control: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub bitbucket_email: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub hooks: Option<Hooks>,
 }
 
@@ -28,11 +30,19 @@ pub struct Hooks {
 
 impl GitWorktreeConfig {
     pub fn new(repository_url: String, main_branch: String) -> Self {
+        // Detect source control type from URL
+        let source_control = if repository_url.contains("bitbucket.org") {
+            "bitbucket-cloud".to_string()
+        } else {
+            "github".to_string()
+        };
+        
         Self {
             repository_url,
             main_branch,
             created_at: Utc::now(),
-            source_control: "github".to_string(),
+            source_control,
+            bitbucket_email: None,
             hooks: Some(Hooks {
                 post_add: Some(vec!["# npm install".to_string()]),
                 post_remove: Some(vec![
@@ -96,12 +106,26 @@ mod tests {
         assert_eq!(config.repository_url, "git@github.com:test/repo.git");
         assert_eq!(config.main_branch, "main");
         assert_eq!(config.source_control, "github");
+        assert_eq!(config.bitbucket_email, None);
         assert!(config.hooks.is_some());
 
         let hooks = config.hooks.unwrap();
         assert!(hooks.post_add.is_some());
         assert!(hooks.post_remove.is_some());
         assert!(hooks.post_init.is_some());
+    }
+    
+    #[test]
+    fn test_config_creation_bitbucket() {
+        let config = GitWorktreeConfig::new(
+            "https://bitbucket.org/workspace/repo.git".to_string(),
+            "main".to_string(),
+        );
+
+        assert_eq!(config.repository_url, "https://bitbucket.org/workspace/repo.git");
+        assert_eq!(config.main_branch, "main");
+        assert_eq!(config.source_control, "bitbucket-cloud");
+        assert_eq!(config.bitbucket_email, None);
     }
 
     #[test]
@@ -147,8 +171,8 @@ mod tests {
         assert_eq!(found_config.repository_url, "git@github.com:test/repo.git");
         assert_eq!(found_config.main_branch, "main");
 
-        // Restore original directory
-        std::env::set_current_dir(original_cwd).unwrap();
+        // Restore original directory before temp_dir is dropped
+        std::env::set_current_dir(&original_cwd).unwrap();
     }
 
     #[test]
@@ -163,7 +187,7 @@ mod tests {
         let result = GitWorktreeConfig::find_config().unwrap();
         assert!(result.is_none());
 
-        // Restore original directory
-        std::env::set_current_dir(original_cwd).unwrap();
+        // Restore original directory before temp_dir is dropped
+        std::env::set_current_dir(&original_cwd).unwrap();
     }
 }
