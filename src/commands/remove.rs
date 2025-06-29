@@ -97,15 +97,52 @@ pub fn run(branch_name: Option<&str>) -> Result<()> {
 
     // Delete the branch if it's not a main branch
     if !main_branches.contains(&branch_display) {
-        match git::execute_streaming(&["branch", "-D", branch_display], Some(&git_working_dir.path)) {
+        // First try to delete the branch normally
+        match git::execute_capture(&["branch", "-d", branch_display], Some(&git_working_dir.path)) {
             Ok(_) => {
                 println!("{}", format!("✓ Branch deleted: {}", branch_display).green());
             }
-            Err(_) => {
-                println!(
-                    "{}",
-                    format!("⚠️  Branch '{}' could not be deleted automatically", branch_display).yellow()
-                );
+            Err(e) => {
+                // If normal deletion fails, check if it's because of unmerged changes
+                if e.to_string().contains("not fully merged") {
+                    println!(
+                        "{}",
+                        format!("⚠️  Branch '{}' has unmerged changes", branch_display).yellow()
+                    );
+                    
+                    // Ask for confirmation to force delete
+                    print!("{}", "Force delete the branch? (y/N): ".cyan());
+                    io::stdout().flush()?;
+                    
+                    let mut input = String::new();
+                    io::stdin().read_line(&mut input)?;
+                    let force_delete = input.trim().to_lowercase();
+                    
+                    if force_delete == "y" || force_delete == "yes" {
+                        match git::execute_streaming(&["branch", "-D", branch_display], Some(&git_working_dir.path)) {
+                            Ok(_) => {
+                                println!("{}", format!("✓ Branch force deleted: {}", branch_display).green());
+                            }
+                            Err(e) => {
+                                println!(
+                                    "{}",
+                                    format!("❌ Failed to delete branch '{}': {}", branch_display, e).red()
+                                );
+                            }
+                        }
+                    } else {
+                        println!(
+                            "{}",
+                            format!("⚠️  Branch '{}' was not deleted", branch_display).yellow()
+                        );
+                    }
+                } else {
+                    // Some other error occurred
+                    println!(
+                        "{}",
+                        format!("❌ Failed to delete branch '{}': {}", branch_display, e).red()
+                    );
+                }
             }
         }
     } else {
