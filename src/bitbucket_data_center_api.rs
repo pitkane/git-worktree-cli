@@ -111,10 +111,14 @@ pub struct BitbucketDataCenterPullRequest {
 #[derive(Debug, Deserialize)]
 pub struct BitbucketDataCenterPullRequestsResponse {
     pub values: Vec<BitbucketDataCenterPullRequest>,
+    #[allow(dead_code)]
     pub size: u32,
+    #[allow(dead_code)]
     pub limit: u32,
     #[serde(rename = "isLastPage")]
+    #[allow(dead_code)]
     pub is_last_page: bool,
+    #[allow(dead_code)]
     pub start: u32,
 }
 
