@@ -143,7 +143,6 @@ impl BitbucketDataCenterClient {
             repo_slug
         );
 
-
         let response = self
             .client
             .get(&url)
@@ -156,7 +155,7 @@ impl BitbucketDataCenterClient {
         if response.status().is_client_error() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            
+
             if status == 401 {
                 return Err(anyhow::anyhow!(
                     "Authentication failed. Please check your Bitbucket Data Center access token and run 'gwt auth bitbucket-data-center' to update it."
@@ -164,13 +163,11 @@ impl BitbucketDataCenterClient {
             } else if status == 404 {
                 return Err(anyhow::anyhow!(
                     "Repository not found: {}/{}. Please check the project key and repository slug.",
-                    project_key, repo_slug
+                    project_key,
+                    repo_slug
                 ));
             } else {
-                return Err(anyhow::anyhow!(
-                    "API request failed with status {}: {}",
-                    status, text
-                ));
+                return Err(anyhow::anyhow!("API request failed with status {}: {}", status, text));
             }
         }
 
@@ -205,10 +202,7 @@ impl BitbucketDataCenterClient {
                     "Authentication failed. Please check your Bitbucket Data Center access token."
                 ))
             } else {
-                Err(anyhow::anyhow!(
-                    "API connection failed with status: {}",
-                    status
-                ))
+                Err(anyhow::anyhow!("API connection failed with status: {}", status))
             }
         }
     }
@@ -219,26 +213,23 @@ pub fn extract_bitbucket_data_center_info_from_url(url: &str) -> Option<(String,
     // https://git.acmeorg.com/scm/PROJECT/repository.git
     // https://git.acmeorg.com/projects/PROJECT/repos/repository
     // git@git.acmeorg.com:PROJECT/repository.git
-    
+
     // Pattern for Data Center URLs with /scm/ path
-    if let Some(captures) = regex::Regex::new(r"([^/]+)/scm/([^/]+)/([^/\.]+)")
-        .ok()?
-        .captures(url)
-    {
+    if let Some(captures) = regex::Regex::new(r"([^/]+)/scm/([^/]+)/([^/\.]+)").ok()?.captures(url) {
         let base_url = captures.get(1)?.as_str();
         let project = captures.get(2)?.as_str();
         let repo = captures.get(3)?.as_str();
-        
+
         // Reconstruct the base URL for API calls
         let api_base_url = if base_url.starts_with("http") {
             base_url.to_string()
         } else {
             format!("https://{}", base_url)
         };
-        
+
         return Some((api_base_url, project.to_string(), repo.to_string()));
     }
-    
+
     // Pattern for Data Center URLs with /projects/ path
     if let Some(captures) = regex::Regex::new(r"([^/]+)/projects/([^/]+)/repos/([^/\.]+)")
         .ok()?
@@ -247,28 +238,25 @@ pub fn extract_bitbucket_data_center_info_from_url(url: &str) -> Option<(String,
         let base_url = captures.get(1)?.as_str();
         let project = captures.get(2)?.as_str();
         let repo = captures.get(3)?.as_str();
-        
+
         let api_base_url = if base_url.starts_with("http") {
             base_url.to_string()
         } else {
             format!("https://{}", base_url)
         };
-        
+
         return Some((api_base_url, project.to_string(), repo.to_string()));
     }
-    
+
     // Pattern for SSH URLs: git@host:project/repo.git
-    if let Some(captures) = regex::Regex::new(r"git@([^:]+):([^/]+)/([^/\.]+)")
-        .ok()?
-        .captures(url)
-    {
+    if let Some(captures) = regex::Regex::new(r"git@([^:]+):([^/]+)/([^/\.]+)").ok()?.captures(url) {
         let host = captures.get(1)?.as_str();
         let project = captures.get(2)?.as_str();
         let repo = captures.get(3)?.as_str();
-        
+
         return Some((format!("https://{}", host), project.to_string(), repo.to_string()));
     }
-    
+
     // Pattern for SSH URLs with protocol: ssh://git@host/project/repo.git
     if let Some(captures) = regex::Regex::new(r"ssh://git@([^/]+)/([^/]+)/([^/\.]+)")
         .ok()?
@@ -277,13 +265,12 @@ pub fn extract_bitbucket_data_center_info_from_url(url: &str) -> Option<(String,
         let host = captures.get(1)?.as_str();
         let project = captures.get(2)?.as_str();
         let repo = captures.get(3)?.as_str();
-        
+
         return Some((format!("https://{}", host), project.to_string(), repo.to_string()));
     }
 
     None
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -293,55 +280,70 @@ mod tests {
     fn test_extract_bitbucket_data_center_info_scm() {
         let url = "https://git.acmeorg.com/scm/PROJ/repo";
         let result = extract_bitbucket_data_center_info_from_url(url);
-        assert_eq!(result, Some((
-            "https://git.acmeorg.com".to_string(),
-            "PROJ".to_string(),
-            "repo".to_string()
-        )));
+        assert_eq!(
+            result,
+            Some((
+                "https://git.acmeorg.com".to_string(),
+                "PROJ".to_string(),
+                "repo".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_extract_bitbucket_data_center_info_scm_git() {
         let url = "https://git.acmeorg.com/scm/PROJ/repo.git";
         let result = extract_bitbucket_data_center_info_from_url(url);
-        assert_eq!(result, Some((
-            "https://git.acmeorg.com".to_string(),
-            "PROJ".to_string(),
-            "repo".to_string()
-        )));
+        assert_eq!(
+            result,
+            Some((
+                "https://git.acmeorg.com".to_string(),
+                "PROJ".to_string(),
+                "repo".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_extract_bitbucket_data_center_info_projects() {
         let url = "https://git.acmeorg.com/projects/PROJ/repos/repo";
         let result = extract_bitbucket_data_center_info_from_url(url);
-        assert_eq!(result, Some((
-            "https://git.acmeorg.com".to_string(),
-            "PROJ".to_string(),
-            "repo".to_string()
-        )));
+        assert_eq!(
+            result,
+            Some((
+                "https://git.acmeorg.com".to_string(),
+                "PROJ".to_string(),
+                "repo".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_extract_bitbucket_data_center_info_ssh() {
         let url = "git@git.acmeorg.com:PROJ/repo.git";
         let result = extract_bitbucket_data_center_info_from_url(url);
-        assert_eq!(result, Some((
-            "https://git.acmeorg.com".to_string(),
-            "PROJ".to_string(),
-            "repo".to_string()
-        )));
+        assert_eq!(
+            result,
+            Some((
+                "https://git.acmeorg.com".to_string(),
+                "PROJ".to_string(),
+                "repo".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_extract_bitbucket_data_center_info_ssh_protocol() {
         let url = "ssh://git@git.acmeorg.com/PROJECT_ID/REPO_ID.git";
         let result = extract_bitbucket_data_center_info_from_url(url);
-        assert_eq!(result, Some((
-            "https://git.acmeorg.com".to_string(),
-            "PROJECT_ID".to_string(),
-            "REPO_ID".to_string()
-        )));
+        assert_eq!(
+            result,
+            Some((
+                "https://git.acmeorg.com".to_string(),
+                "PROJECT_ID".to_string(),
+                "REPO_ID".to_string()
+            ))
+        );
     }
 
     #[test]
@@ -350,5 +352,4 @@ mod tests {
         let result = extract_bitbucket_data_center_info_from_url(url);
         assert_eq!(result, None);
     }
-
 }

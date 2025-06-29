@@ -36,7 +36,7 @@ impl GitWorktreeConfig {
             Provider::BitbucketCloud => "bitbucket-cloud".to_string(),
             Provider::BitbucketDataCenter => "bitbucket-data-center".to_string(),
         };
-        
+
         Self {
             repository_url,
             main_branch,
@@ -45,16 +45,13 @@ impl GitWorktreeConfig {
             bitbucket_email: None,
             hooks: Some(Hooks {
                 post_add: Some(vec!["# npm install".to_string()]),
-                post_remove: Some(vec![
-                    "# echo 'Removed worktree for branch ${branchName}'".to_string()
-                ]),
+                post_remove: Some(vec!["# echo 'Removed worktree for branch ${branchName}'".to_string()]),
             }),
         }
     }
 
     pub fn save(&self, path: &Path) -> Result<()> {
-        let yaml_string =
-            serde_yaml::to_string(self).context("Failed to serialize config to YAML")?;
+        let yaml_string = serde_yaml::to_string(self).context("Failed to serialize config to YAML")?;
 
         fs::write(path, yaml_string).context("Failed to write config file")?;
 
@@ -113,7 +110,7 @@ mod tests {
         assert!(hooks.post_add.is_some());
         assert!(hooks.post_remove.is_some());
     }
-    
+
     #[test]
     fn test_config_creation_bitbucket() {
         let config = GitWorktreeConfig::new(
@@ -136,7 +133,10 @@ mod tests {
             Provider::BitbucketDataCenter,
         );
 
-        assert_eq!(config.repository_url, "https://bitbucket.company.com/scm/project/repo.git");
+        assert_eq!(
+            config.repository_url,
+            "https://bitbucket.company.com/scm/project/repo.git"
+        );
         assert_eq!(config.main_branch, "main");
         assert_eq!(config.source_control, "bitbucket-data-center");
         assert_eq!(config.bitbucket_email, None);

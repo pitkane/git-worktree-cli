@@ -6,9 +6,7 @@ use std::process::{Command, Stdio};
 /// Execute a git command with real-time output streaming
 pub fn execute_streaming(args: &[&str], cwd: Option<&Path>) -> Result<()> {
     let mut cmd = Command::new("git");
-    cmd.args(args)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit());
+    cmd.args(args).stdout(Stdio::inherit()).stderr(Stdio::inherit());
 
     if let Some(dir) = cwd {
         cmd.current_dir(dir);
@@ -55,12 +53,7 @@ pub fn get_default_branch(repo_path: &Path) -> Result<String> {
 
 /// Add a new worktree
 #[allow(dead_code)]
-pub fn add_worktree(
-    git_dir: &Path,
-    worktree_path: &Path,
-    branch: &str,
-    base_branch: &str,
-) -> Result<()> {
+pub fn add_worktree(git_dir: &Path, worktree_path: &Path, branch: &str, base_branch: &str) -> Result<()> {
     execute_streaming(
         &[
             "worktree",
@@ -83,10 +76,7 @@ pub fn list_worktrees(git_dir: Option<&Path>) -> Result<Vec<Worktree>> {
 /// Remove a worktree
 #[allow(dead_code)]
 pub fn remove_worktree(git_dir: &Path, worktree_path: &Path) -> Result<()> {
-    execute_streaming(
-        &["worktree", "remove", worktree_path.to_str().unwrap()],
-        Some(git_dir),
-    )
+    execute_streaming(&["worktree", "remove", worktree_path.to_str().unwrap()], Some(git_dir))
 }
 
 /// Delete a branch
@@ -97,8 +87,7 @@ pub fn delete_branch(git_dir: &Path, branch_name: &str) -> Result<()> {
 
 /// Check if a branch exists
 pub fn branch_exists(git_dir: &Path, branch_name: &str) -> Result<(bool, bool)> {
-    let local =
-        execute_capture(&["branch", "--list", branch_name], Some(git_dir)).unwrap_or_default();
+    let local = execute_capture(&["branch", "--list", branch_name], Some(git_dir)).unwrap_or_default();
 
     let remote = execute_capture(
         &["branch", "-r", "--list", &format!("origin/{}", branch_name)],

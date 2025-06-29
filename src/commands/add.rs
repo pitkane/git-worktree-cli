@@ -1,7 +1,7 @@
-use anyhow::{Result, bail};
-use std::path::{Path, PathBuf};
-use std::fs;
+use anyhow::{bail, Result};
 use colored::Colorize;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 use crate::config::GitWorktreeConfig;
 use crate::git;
@@ -14,44 +14,76 @@ pub fn run(branch_name: &str) -> Result<()> {
 
     // Determine git root and target path
     let (git_working_dir, target_path, project_root) = determine_paths(branch_name)?;
-    
-    println!("{}", format!("Preparing worktree (new branch '{}')", branch_name).cyan());
+
+    println!(
+        "{}",
+        format!("Preparing worktree (new branch '{}')", branch_name).cyan()
+    );
 
     // Get main branch from config
     let main_branch = get_main_branch(&project_root)?;
-    
+
     // Check if branch exists locally or remotely
     let (local_exists, remote_exists) = git::branch_exists(&git_working_dir, branch_name)?;
-    
+
     // Create worktree based on branch existence
     if local_exists {
-        println!("{}", format!("Branch '{}' exists locally, checking out existing branch...", branch_name).yellow());
-        git::execute_streaming(&[
-            "worktree", "add", 
-            target_path.to_str().unwrap(), 
-            branch_name
-        ], Some(&git_working_dir))?;
+        println!(
+            "{}",
+            format!(
+                "Branch '{}' exists locally, checking out existing branch...",
+                branch_name
+            )
+            .yellow()
+        );
+        git::execute_streaming(
+            &["worktree", "add", target_path.to_str().unwrap(), branch_name],
+            Some(&git_working_dir),
+        )?;
     } else if remote_exists {
-        println!("{}", format!("Branch '{}' exists remotely, checking out remote branch...", branch_name).yellow());
-        git::execute_streaming(&[
-            "worktree", "add", 
-            target_path.to_str().unwrap(), 
-            "-b", branch_name, 
-            &format!("origin/{}", branch_name)
-        ], Some(&git_working_dir))?;
+        println!(
+            "{}",
+            format!(
+                "Branch '{}' exists remotely, checking out remote branch...",
+                branch_name
+            )
+            .yellow()
+        );
+        git::execute_streaming(
+            &[
+                "worktree",
+                "add",
+                target_path.to_str().unwrap(),
+                "-b",
+                branch_name,
+                &format!("origin/{}", branch_name),
+            ],
+            Some(&git_working_dir),
+        )?;
     } else {
-        println!("{}", format!("Creating new branch '{}' from 'origin/{}'...", branch_name, main_branch).cyan());
-        git::execute_streaming(&[
-            "worktree", "add", 
-            "--no-track",
-            target_path.to_str().unwrap(), 
-            "-b", branch_name, 
-            &format!("origin/{}", main_branch)
-        ], Some(&git_working_dir))?;
+        println!(
+            "{}",
+            format!("Creating new branch '{}' from 'origin/{}'...", branch_name, main_branch).cyan()
+        );
+        git::execute_streaming(
+            &[
+                "worktree",
+                "add",
+                "--no-track",
+                target_path.to_str().unwrap(),
+                "-b",
+                branch_name,
+                &format!("origin/{}", main_branch),
+            ],
+            Some(&git_working_dir),
+        )?;
     }
 
     // Success messages
-    println!("{}", format!("✓ Worktree created at: {}", target_path.display()).green());
+    println!(
+        "{}",
+        format!("✓ Worktree created at: {}", target_path.display()).green()
+    );
     println!("{}", format!("✓ Branch: {}", branch_name).green());
 
     // Execute post-add hooks
@@ -61,7 +93,7 @@ pub fn run(branch_name: &str) -> Result<()> {
         &[
             ("branchName", branch_name),
             ("worktreePath", target_path.to_str().unwrap()),
-        ]
+        ],
     )?;
 
     Ok(())
@@ -71,25 +103,25 @@ fn determine_paths(branch_name: &str) -> Result<(PathBuf, PathBuf, PathBuf)> {
     let project_root = find_project_root()?;
     let target_path = project_root.join(branch_name);
     let git_working_dir = find_existing_worktree(&project_root)?;
-    
+
     Ok((git_working_dir, target_path, project_root))
 }
 
 fn find_project_root() -> Result<PathBuf> {
     let current_dir = std::env::current_dir()?;
-    
+
     // Search upward for git-worktree-config.yaml
     let mut search_path = current_dir.clone();
     loop {
         if search_path.join("git-worktree-config.yaml").exists() {
             return Ok(search_path);
         }
-        
+
         if !search_path.pop() {
             break;
         }
     }
-    
+
     // No config found, provide helpful error
     if git::get_git_root()?.is_some() {
         bail!("Found git repository but no git-worktree-config.yaml. This doesn't appear to be a worktree project.");
@@ -100,7 +132,7 @@ fn find_project_root() -> Result<PathBuf> {
 
 fn find_existing_worktree(project_root: &Path) -> Result<PathBuf> {
     let entries = fs::read_dir(project_root)?;
-    
+
     for entry in entries {
         let entry = entry?;
         if entry.file_type()?.is_dir() {
@@ -110,7 +142,7 @@ fn find_existing_worktree(project_root: &Path) -> Result<PathBuf> {
             }
         }
     }
-    
+
     bail!("No existing worktrees found in project root. Create one first using gwt init.")
 }
 

@@ -1,7 +1,4 @@
 #[allow(dead_code)]
 pub fn clean_branch_name(branch: &str) -> String {
-    branch
-        .strip_prefix("refs/heads/")
-        .unwrap_or(branch)
-        .to_string()
+    branch.strip_prefix("refs/heads/").unwrap_or(branch).to_string()
 }

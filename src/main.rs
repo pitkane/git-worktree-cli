@@ -15,7 +15,7 @@ mod github;
 mod hooks;
 mod utils;
 
-use cli::{Cli, Commands, CompletionAction, AuthAction};
+use cli::{AuthAction, Cli, Commands, CompletionAction};
 use commands::{add, auth, init, list, remove};
 
 fn main() -> Result<()> {
@@ -34,19 +34,17 @@ fn main() -> Result<()> {
         Commands::Remove { branch_name } => {
             remove::run(branch_name.as_deref())?;
         }
-        Commands::Auth { action } => {
-            match action {
-                AuthAction::Github => {
-                    auth::run()?;
-                }
-                AuthAction::BitbucketCloud { action } => {
-                    auth::run_bitbucket_cloud(action)?;
-                }
-                AuthAction::BitbucketDataCenter { action } => {
-                    auth::run_bitbucket_data_center(action)?;
-                }
+        Commands::Auth { action } => match action {
+            AuthAction::Github => {
+                auth::run()?;
             }
-        }
+            AuthAction::BitbucketCloud { action } => {
+                auth::run_bitbucket_cloud(action)?;
+            }
+            AuthAction::BitbucketDataCenter { action } => {
+                auth::run_bitbucket_data_center(action)?;
+            }
+        },
         Commands::Completions { action } => {
             handle_completions(action)?;
         }
@@ -66,9 +64,7 @@ fn handle_completions(action: Option<CompletionAction>) -> Result<()> {
             println!("{}", completions::get_completion_content(shell));
         }
         Some(CompletionAction::Install { shell }) => {
-            let shell = shell.unwrap_or_else(|| {
-                completions::detect_shell().unwrap_or(clap_complete::Shell::Bash)
-            });
+            let shell = shell.unwrap_or_else(|| completions::detect_shell().unwrap_or(clap_complete::Shell::Bash));
             completions::install_completions_for_shell(shell)?;
         }
     }
@@ -83,16 +79,10 @@ fn check_completions_status() -> Result<()> {
 
     if installed {
         println!("✓ Completions appear to be installed");
-        println!(
-            "\nTo reinstall or update, run: {}",
-            "gwt completions install".cyan()
-        );
+        println!("\nTo reinstall or update, run: {}", "gwt completions install".cyan());
     } else {
         println!("✗ Completions not installed");
-        println!(
-            "\nTo install completions, run: {}",
-            "gwt completions install".cyan()
-        );
+        println!("\nTo install completions, run: {}", "gwt completions install".cyan());
     }
 
     println!("\nTo generate completions for a specific shell:");

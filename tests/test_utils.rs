@@ -8,14 +8,14 @@ pub fn setup_test_env() -> TempDir {
         .prefix("gwt_test_")
         .tempdir()
         .expect("Failed to create temp directory");
-    
+
     // Ensure the temp directory is clean
     let temp_path = temp_dir.path();
     if temp_path.exists() {
         fs::remove_dir_all(temp_path).ok();
         fs::create_dir_all(temp_path).expect("Failed to create temp directory");
     }
-    
+
     temp_dir
 }
 
@@ -40,7 +40,7 @@ hooks:
 "#,
         repo_url, main_branch
     );
-    
+
     let config_path = dir.join("git-worktree-config.yaml");
     fs::write(&config_path, config_content).expect("Failed to write test config");
     config_path
@@ -54,12 +54,12 @@ pub fn is_git_repo(dir: &std::path::Path) -> bool {
 /// Get the current git branch name from a repository
 pub fn get_current_branch(repo_dir: &std::path::Path) -> Result<String, Box<dyn std::error::Error>> {
     use std::process::Command;
-    
+
     let output = Command::new("git")
         .args(&["symbolic-ref", "--short", "HEAD"])
         .current_dir(repo_dir)
         .output()?;
-    
+
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)?.trim().to_string())
     } else {

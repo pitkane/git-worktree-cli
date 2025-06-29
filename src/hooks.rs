@@ -5,11 +5,7 @@ use std::process::{Command, Stdio};
 
 use crate::config::GitWorktreeConfig;
 
-pub fn execute_hooks(
-    hook_type: &str,
-    working_directory: &Path,
-    variables: &[(&str, &str)],
-) -> Result<()> {
+pub fn execute_hooks(hook_type: &str, working_directory: &Path, variables: &[(&str, &str)]) -> Result<()> {
     // Find the config file
     let config = match GitWorktreeConfig::find_config()? {
         Some((_, config)) => config,
@@ -44,10 +40,7 @@ pub fn execute_hooks(
     for hook in hook_commands {
         // Skip commented lines
         if hook.trim().starts_with('#') {
-            println!(
-                "   {}",
-                format!("Skipping commented hook: {}", hook).yellow()
-            );
+            println!("   {}", format!("Skipping commented hook: {}", hook).yellow());
             continue;
         }
 

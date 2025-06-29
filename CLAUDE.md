@@ -10,6 +10,7 @@ This file provides guidance to ([Claude Code](https://www.anthropic.com/claude-c
 - **Run tests**: `cargo test` - Comprehensive unit and integration tests
 - **Type checking**: `cargo check` - Fast compilation check without building binary
 - **Run with cargo**: `cargo run -- <command>` - Run directly with cargo for development
+- **Format code**: `cargo fmt` - Format all Rust code according to rustfmt.toml settings
 
 ### Testing and Local Development
 When Claude needs to test functionality locally:
@@ -214,6 +215,7 @@ Project tasks and TODOs are tracked in `TODO.md` for persistence across Claude C
 ## Code Style
 
 - **Language**: Rust 2021 edition with standard formatting
+- **Formatting**: `cargo fmt` with rustfmt.toml configuration (120 character line width)
 - **Error Handling**: `anyhow::Result` for error propagation with context
 - **CLI Framework**: `clap` with derive macros for argument parsing
 - **Serialization**: `serde` with `serde_yaml` for configuration files
