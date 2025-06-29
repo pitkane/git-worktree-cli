@@ -64,18 +64,13 @@ impl BitbucketClient {
         let client = Client::new();
         BitbucketClient { client, auth }
     }
-    
+
     fn get_email(&self) -> String {
         // Use email from auth if available, otherwise use a placeholder
-        self.auth.email()
-            .unwrap_or_else(|| "user".to_string())
+        self.auth.email().unwrap_or_else(|| "user".to_string())
     }
 
-    pub async fn get_pull_requests(
-        &self,
-        workspace: &str,
-        repo_slug: &str,
-    ) -> Result<Vec<BitbucketPullRequest>> {
+    pub async fn get_pull_requests(&self, workspace: &str, repo_slug: &str) -> Result<Vec<BitbucketPullRequest>> {
         let token = self.auth.get_token()?;
         let url = format!(
             "https://api.bitbucket.org/2.0/repositories/{}/{}/pullrequests",
@@ -94,7 +89,7 @@ impl BitbucketClient {
         if response.status().is_client_error() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            
+
             if status == 401 {
                 return Err(anyhow::anyhow!(
                     "Authentication failed. Please check your Bitbucket credentials and run 'gwt auth bitbucket' to update them."
@@ -102,13 +97,11 @@ impl BitbucketClient {
             } else if status == 404 {
                 return Err(anyhow::anyhow!(
                     "Repository not found: {}/{}. Please check the workspace and repository name.",
-                    workspace, repo_slug
+                    workspace,
+                    repo_slug
                 ));
             } else {
-                return Err(anyhow::anyhow!(
-                    "API request failed with status {}: {}",
-                    status, text
-                ));
+                return Err(anyhow::anyhow!("API request failed with status {}: {}", status, text));
             }
         }
 
@@ -143,10 +136,7 @@ impl BitbucketClient {
                     "Authentication failed. Please check your Bitbucket credentials."
                 ))
             } else {
-                Err(anyhow::anyhow!(
-                    "API connection failed with status: {}",
-                    status
-                ))
+                Err(anyhow::anyhow!("API connection failed with status: {}", status))
             }
         }
     }

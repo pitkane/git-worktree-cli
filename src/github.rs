@@ -38,12 +38,7 @@ impl GitHubClient {
         Self::get_gh_token().is_some()
     }
 
-    pub fn get_pull_requests(
-        &self,
-        owner: &str,
-        repo: &str,
-        branch: &str,
-    ) -> Result<Vec<PullRequest>> {
+    pub fn get_pull_requests(&self, owner: &str, repo: &str, branch: &str) -> Result<Vec<PullRequest>> {
         // Use gh CLI instead of HTTP API
         let output = std::process::Command::new("gh")
             .args([
@@ -76,8 +71,8 @@ impl GitHubClient {
             return Ok(vec![]);
         }
 
-        let prs: Vec<serde_json::Value> = serde_json::from_str(&stdout)
-            .context("Failed to parse pull requests from gh output")?;
+        let prs: Vec<serde_json::Value> =
+            serde_json::from_str(&stdout).context("Failed to parse pull requests from gh output")?;
 
         Ok(prs
             .into_iter()
@@ -86,16 +81,12 @@ impl GitHubClient {
                 title: pr["title"].as_str().unwrap_or("").to_string(),
                 state: pr["state"].as_str().unwrap_or("").to_string(),
                 html_url: pr["url"].as_str().unwrap_or("").to_string(), // Changed from html_url to url
-                draft: pr["isDraft"].as_bool().unwrap_or(false), // Changed from draft to isDraft
+                draft: pr["isDraft"].as_bool().unwrap_or(false),        // Changed from draft to isDraft
             })
             .collect())
     }
 
-    pub fn get_all_pull_requests(
-        &self,
-        owner: &str,
-        repo: &str,
-    ) -> Result<Vec<(PullRequest, String)>> {
+    pub fn get_all_pull_requests(&self, owner: &str, repo: &str) -> Result<Vec<(PullRequest, String)>> {
         // Fetch all open pull requests with branch information
         let output = std::process::Command::new("gh")
             .args([
@@ -128,8 +119,8 @@ impl GitHubClient {
             return Ok(vec![]);
         }
 
-        let prs: Vec<serde_json::Value> = serde_json::from_str(&stdout)
-            .context("Failed to parse pull requests from gh output")?;
+        let prs: Vec<serde_json::Value> =
+            serde_json::from_str(&stdout).context("Failed to parse pull requests from gh output")?;
 
         Ok(prs
             .into_iter()

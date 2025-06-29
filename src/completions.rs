@@ -81,8 +81,7 @@ pub fn get_completion_install_path(shell: Shell) -> Result<PathBuf> {
                 PathBuf::from(&env::var("USERPROFILE").unwrap_or(home))
                     .join("Documents/PowerShell/Modules/gwt-completions/gwt-completions.psm1")
             } else {
-                PathBuf::from(&home)
-                    .join(".config/powershell/Modules/gwt-completions/gwt-completions.psm1")
+                PathBuf::from(&home).join(".config/powershell/Modules/gwt-completions/gwt-completions.psm1")
             };
             Ok(profile_path)
         }
@@ -141,17 +140,17 @@ pub fn install_completions_for_shell(shell: Shell) -> Result<()> {
 fn setup_zsh_completions() -> Result<()> {
     let home = env::var("HOME")?;
     let zshrc_path = PathBuf::from(&home).join(".zshrc");
-    
+
     ensure_zshrc_exists(&zshrc_path)?;
-    
+
     let mut content = fs::read_to_string(&zshrc_path)?;
     let modified = add_zsh_completion_config(&mut content, &home)?;
-    
+
     if modified {
         fs::write(&zshrc_path, content)?;
         println!("✓ Updated ~/.zshrc");
     }
-    
+
     show_zsh_activation_instructions();
     Ok(())
 }
@@ -166,28 +165,28 @@ fn ensure_zshrc_exists(zshrc_path: &Path) -> Result<()> {
 
 fn add_zsh_completion_config(content: &mut String, home: &str) -> Result<bool> {
     let fpath_dir = format!("{}/.local/share/zsh/site-functions", home);
-    
+
     if content.contains(&fpath_dir) {
         println!("\n✓ Completion path already configured in ~/.zshrc");
         return Ok(false);
     }
-    
+
     println!("\n✓ Adding completion path to ~/.zshrc");
-    
+
     // Ensure proper newline before adding content
     if !content.is_empty() && !content.ends_with('\n') {
         content.push('\n');
     }
-    
+
     // Add fpath configuration
     content.push_str("\n# Git worktree CLI completions\n");
     content.push_str(&format!("fpath=({} $fpath)\n", fpath_dir));
-    
+
     // Add compinit if not present
     if !content.contains("compinit") {
         content.push_str("autoload -Uz compinit && compinit\n");
     }
-    
+
     Ok(true)
 }
 
@@ -199,23 +198,23 @@ fn show_zsh_activation_instructions() {
 
 pub fn check_completions_installed(shell: Shell) -> Result<bool> {
     let install_path = get_completion_install_path(shell)?;
-    
+
     // Check if completion file exists
     if !install_path.exists() {
         return Ok(false);
     }
-    
+
     // For Zsh, also check if fpath is configured
     if matches!(shell, Shell::Zsh) {
         let home = env::var("HOME")?;
         let zshrc_path = PathBuf::from(&home).join(".zshrc");
-        
+
         if zshrc_path.exists() {
             let content = fs::read_to_string(&zshrc_path)?;
             let fpath_configured = content.contains(&format!("{}/.local/share/zsh/site-functions", home));
             return Ok(fpath_configured);
         }
     }
-    
+
     Ok(true)
 }

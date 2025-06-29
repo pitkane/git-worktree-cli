@@ -1,5 +1,5 @@
+use crate::{bitbucket_api, bitbucket_data_center_api, github};
 use anyhow::Result;
-use crate::{github, bitbucket_api, bitbucket_data_center_api};
 
 pub struct PullRequestInfo {
     pub url: String,
@@ -19,7 +19,9 @@ pub async fn fetch_pr_for_branch(
     match platform {
         "github" => fetch_github_pr(github_client, owner_or_workspace, repo, branch),
         "bitbucket-cloud" => fetch_bitbucket_cloud_pr(bitbucket_client, owner_or_workspace, repo, branch).await,
-        "bitbucket-data-center" => fetch_bitbucket_data_center_pr(bitbucket_data_center_client, owner_or_workspace, repo, branch).await,
+        "bitbucket-data-center" => {
+            fetch_bitbucket_data_center_pr(bitbucket_data_center_client, owner_or_workspace, repo, branch).await
+        }
         _ => Ok(None),
     }
 }
@@ -44,7 +46,7 @@ fn fetch_github_pr(
                             _ => &pr.state.to_uppercase(),
                         }
                     };
-                    
+
                     Ok(Some(PullRequestInfo {
                         url: pr.html_url.clone(),
                         status: status.to_string(),

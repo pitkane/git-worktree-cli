@@ -1,0 +1,5 @@
+# Line width
+max_width = 120
+
+# Use 2021 edition formatting rules
+edition = "2021"

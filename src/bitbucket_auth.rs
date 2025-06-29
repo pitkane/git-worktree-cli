@@ -15,13 +15,10 @@ impl BitbucketAuth {
     pub fn new(workspace: String, repo: String, email: Option<String>) -> Result<Self> {
         // Use workspace/repo as the key identifier for better isolation
         let key_id = format!("{}/{}", workspace, repo);
-        let token_entry = Entry::new(SERVICE_NAME, &key_id)
-            .context("Failed to create keyring entry for Bitbucket token")?;
+        let token_entry =
+            Entry::new(SERVICE_NAME, &key_id).context("Failed to create keyring entry for Bitbucket token")?;
 
-        Ok(BitbucketAuth {
-            email,
-            token_entry,
-        })
+        Ok(BitbucketAuth { email, token_entry })
     }
 
     pub fn get_token(&self) -> Result<String> {
@@ -68,8 +65,8 @@ pub fn get_auth_from_config() -> Result<(String, String, Option<String>)> {
     use crate::bitbucket_api::extract_bitbucket_info_from_url;
     use crate::config::GitWorktreeConfig;
 
-    let (_, config) = GitWorktreeConfig::find_config()?
-        .ok_or_else(|| anyhow::anyhow!("No git-worktree-config.yaml found"))?;
+    let (_, config) =
+        GitWorktreeConfig::find_config()?.ok_or_else(|| anyhow::anyhow!("No git-worktree-config.yaml found"))?;
 
     if !config.repository_url.contains("bitbucket.org") {
         return Err(anyhow::anyhow!("This is not a Bitbucket repository"));
