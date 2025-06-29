@@ -27,6 +27,7 @@ pub fn cleanup_test_env(temp_dir: TempDir) {
 }
 
 /// Create a test configuration file
+#[allow(dead_code)]
 pub fn create_test_config(dir: &std::path::Path, repo_url: &str, main_branch: &str) -> PathBuf {
     let config_content = format!(
         r#"repositoryUrl: {}
@@ -47,11 +48,13 @@ hooks:
 }
 
 /// Verify that a directory contains a git repository
+#[allow(dead_code)]
 pub fn is_git_repo(dir: &std::path::Path) -> bool {
     dir.join(".git").exists()
 }
 
 /// Get the current git branch name from a repository
+#[allow(dead_code)]
 pub fn get_current_branch(repo_dir: &std::path::Path) -> Result<String, Box<dyn std::error::Error>> {
     use std::process::Command;
 
@@ -68,6 +71,7 @@ pub fn get_current_branch(repo_dir: &std::path::Path) -> Result<String, Box<dyn 
 }
 
 /// Check if git is available on the system
+#[allow(dead_code)]
 pub fn is_git_available() -> bool {
     std::process::Command::new("git")
         .arg("--version")
