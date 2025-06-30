@@ -3,7 +3,7 @@ use colored::Colorize;
 use std::fs;
 use std::path::PathBuf;
 
-use super::list_helpers::{clean_branch_name, fetch_pr_for_branch, PullRequestInfo};
+use super::list_helpers::{clean_branch_name, fetch_pr_for_branch, PullRequestInfo, extract_bitbucket_cloud_url, extract_bitbucket_data_center_url};
 use crate::{
     bitbucket_api, bitbucket_auth, bitbucket_data_center_api, bitbucket_data_center_auth, config, git, github,
 };
@@ -215,6 +215,55 @@ pub async fn run() -> Result<()> {
                                                 title: pr.title.clone(),
                                             },
                                         });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    "bitbucket-cloud" => {
+                        if let Some(ref client) = bitbucket_client {
+                            if let Ok(all_prs) = client.get_pull_requests(owner_or_workspace, repo).await {
+                                for pr in all_prs {
+                                    // Only include open PRs
+                                    if pr.state == "OPEN" {
+                                        let branch_name = pr.source.branch.name.clone();
+                                        // Skip if we already have a local worktree for this branch
+                                        if !local_branches.contains(&branch_name) {
+                                            let url = extract_bitbucket_cloud_url(&pr);
+                                            remote_prs.push(RemotePullRequest {
+                                                branch: branch_name,
+                                                pr_info: PullRequestInfo {
+                                                    url,
+                                                    status: "OPEN".to_string(),
+                                                    title: pr.title.clone(),
+                                                },
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    "bitbucket-data-center" => {
+                        if let Some(ref client) = bitbucket_data_center_client {
+                            if let Ok(all_prs) = client.get_pull_requests(owner_or_workspace, repo).await {
+                                for pr in all_prs {
+                                    // Only include open PRs
+                                    if pr.state == "OPEN" {
+                                        let branch_name = pr.from_ref.display_id.clone();
+                                        // Skip if we already have a local worktree for this branch
+                                        if !local_branches.contains(&branch_name) {
+                                            let status = if pr.draft.unwrap_or(false) { "DRAFT" } else { "OPEN" };
+                                            let url = extract_bitbucket_data_center_url(&pr);
+                                            remote_prs.push(RemotePullRequest {
+                                                branch: branch_name,
+                                                pr_info: PullRequestInfo {
+                                                    url,
+                                                    status: status.to_string(),
+                                                    title: pr.title.clone(),
+                                                },
+                                            });
+                                        }
                                     }
                                 }
                             }
