@@ -2,31 +2,20 @@ use anyhow::{bail, Result};
 use colored::Colorize;
 use std::fs;
 use std::path::PathBuf;
-use tabled::{settings::Style, Table, Tabled};
 
-use super::list_helpers::{clean_branch_name, fetch_pr_for_branch, format_pr_display};
+use super::list_helpers::{clean_branch_name, fetch_pr_for_branch, PullRequestInfo};
 use crate::{
     bitbucket_api, bitbucket_auth, bitbucket_data_center_api, bitbucket_data_center_auth, config, git, github,
 };
 
-#[derive(Tabled)]
 struct WorktreeDisplay {
-    #[tabled(rename = "BRANCH")]
     branch: String,
-    #[tabled(rename = "PULL REQUEST")]
-    pull_request: String,
-    #[tabled(rename = "TITLE")]
-    title: String,
+    pr_info: Option<PullRequestInfo>,
 }
 
-#[derive(Tabled)]
-struct PullRequestDisplay {
-    #[tabled(rename = "BRANCH")]
+struct RemotePullRequest {
     branch: String,
-    #[tabled(rename = "PULL REQUEST")]
-    pull_request: String,
-    #[tabled(rename = "TITLE")]
-    title: String,
+    pr_info: PullRequestInfo,
 }
 
 #[tokio::main]
@@ -163,10 +152,10 @@ pub async fn run() -> Result<()> {
         });
 
         // Fetch PR info if available
-        let (pull_request, title) = if has_pr_info && !wt.bare && branch != "(bare)" {
+        let pr_info = if has_pr_info && !wt.bare && branch != "(bare)" {
             match &repo_info {
                 Some((platform, owner_or_workspace, repo)) => {
-                    let pr_info = fetch_pr_for_branch(
+                    let pr_result = fetch_pr_for_branch(
                         platform,
                         owner_or_workspace,
                         repo,
@@ -177,36 +166,35 @@ pub async fn run() -> Result<()> {
                     )
                     .await;
 
-                    match pr_info {
-                        Ok(info) => format_pr_display(info),
-                        Err(_) => ("?".to_string(), String::new()),
+                    match pr_result {
+                        Ok(info) => info,
+                        Err(_) => None,
                     }
                 }
-                None => ("-".to_string(), String::new()),
+                None => None,
             }
         } else {
-            ("-".to_string(), String::new())
+            None
         };
 
         display_worktrees.push(WorktreeDisplay {
             branch,
-            pull_request,
-            title,
+            pr_info,
         });
     }
 
-    // Display local worktrees table
+    // Display local worktrees
     if !display_worktrees.is_empty() {
         println!("{}", "Local Worktrees:".bold());
-        let mut table = Table::new(&display_worktrees);
-        table.with(Style::sharp());
-        let table_string = table.to_string();
-        let colored_table = apply_colors_to_table(&table_string);
-        println!("{}", colored_table);
+        println!();
+        
+        for worktree in &display_worktrees {
+            display_worktree(&worktree);
+        }
     }
 
     // Fetch all open pull requests and add ones that don't have local worktrees
-    let mut remote_prs: Vec<PullRequestDisplay> = Vec::new();
+    let mut remote_prs: Vec<RemotePullRequest> = Vec::new();
 
     if has_pr_info {
         match &repo_info {
@@ -218,11 +206,14 @@ pub async fn run() -> Result<()> {
                                 for (pr, branch_name) in all_prs {
                                     // Skip if we already have a local worktree for this branch
                                     if !local_branches.contains(&branch_name) {
-                                        let status_text = if pr.draft { "DRAFT" } else { "OPEN" };
-                                        remote_prs.push(PullRequestDisplay {
+                                        let status = if pr.draft { "DRAFT" } else { "OPEN" };
+                                        remote_prs.push(RemotePullRequest {
                                             branch: branch_name,
-                                            pull_request: format!("{} ({})", pr.html_url, status_text),
-                                            title: pr.title.clone(),
+                                            pr_info: PullRequestInfo {
+                                                url: pr.html_url,
+                                                status: status.to_string(),
+                                                title: pr.title.clone(),
+                                            },
                                         });
                                     }
                                 }
@@ -236,17 +227,17 @@ pub async fn run() -> Result<()> {
         }
     }
 
-    // Display remote PRs table if any exist
+    // Display remote PRs if any exist
     if !remote_prs.is_empty() {
         if !display_worktrees.is_empty() {
-            println!(); // Add spacing between tables
+            println!(); // Add spacing between sections
         }
         println!("{}", "Open Pull Requests (no local worktree):".bold());
-        let mut table = Table::new(remote_prs);
-        table.with(Style::sharp());
-        let table_string = table.to_string();
-        let colored_table = apply_colors_to_table(&table_string);
-        println!("{}", colored_table);
+        println!();
+        
+        for pr in &remote_prs {
+            display_remote_pr(&pr);
+        }
     }
 
     if !has_pr_info {
@@ -275,51 +266,49 @@ pub async fn run() -> Result<()> {
     Ok(())
 }
 
-fn apply_colors_to_table(table_str: &str) -> String {
-    let lines: Vec<&str> = table_str.lines().collect();
-    let mut result = String::new();
-
-    for line in lines {
-        let mut colored_line = line.to_string();
-
-        // Color status indicators
-        if line.contains("(OPEN)") {
-            colored_line = colored_line.replace("(OPEN)", &format!("({})", "open".green()));
-        } else if line.contains("(CLOSED)") {
-            colored_line = colored_line.replace("(CLOSED)", &format!("({})", "closed".red()));
-        } else if line.contains("(MERGED)") {
-            colored_line = colored_line.replace("(MERGED)", &format!("({})", "merged".green()));
-        } else if line.contains("(DRAFT)") {
-            colored_line = colored_line.replace("(DRAFT)", &format!("({})", "draft".yellow()));
+fn display_worktree(worktree: &WorktreeDisplay) {
+    // Display branch name in cyan
+    println!("{}", worktree.branch.cyan());
+    
+    // Display PR info if available
+    if let Some(ref pr_info) = worktree.pr_info {
+        // Display URL with status
+        let status_colored = match pr_info.status.as_str() {
+            "OPEN" => "open".green(),
+            "CLOSED" => "closed".red(),
+            "MERGED" => "merged".green(),
+            "DRAFT" => "draft".yellow(),
+            _ => pr_info.status.normal(),
+        };
+        println!("  {} ({})", pr_info.url.blue().underline(), status_colored);
+        
+        // Display title if not empty
+        if !pr_info.title.is_empty() {
+            println!("  {}", pr_info.title.dimmed());
         }
-
-        // Color URLs - find complete URLs and color them
-        if let Some(url_start) = line.find("https://github.com/") {
-            if let Some(url_end) = line[url_start..].find(" (") {
-                let url = &line[url_start..url_start + url_end];
-                colored_line = colored_line.replace(url, &format!("{}", url.blue().underline()));
-            }
-        } else if let Some(url_start) = line.find("https://bitbucket.org/") {
-            if let Some(url_end) = line[url_start..].find(" (") {
-                let url = &line[url_start..url_start + url_end];
-                colored_line = colored_line.replace(url, &format!("{}", url.blue().underline()));
-            }
-        } else if let Some(url_start) = line.find("https://") {
-            // For Bitbucket Data Center or other https URLs
-            if let Some(url_end) = line[url_start..].find(" (") {
-                let url = &line[url_start..url_start + url_end];
-                // Only color if it looks like a reasonable URL (contains some path)
-                if url.contains("/") && url.len() > 10 {
-                    colored_line = colored_line.replace(url, &format!("{}", url.blue().underline()));
-                }
-            }
-        }
-
-        result.push_str(&colored_line);
-        result.push('\n');
     }
+    println!(); // Empty line between worktrees
+}
 
-    result.trim_end().to_string()
+fn display_remote_pr(pr: &RemotePullRequest) {
+    // Display branch name in cyan
+    println!("{}", pr.branch.cyan());
+    
+    // Display URL with status
+    let status_colored = match pr.pr_info.status.as_str() {
+        "OPEN" => "open".green(),
+        "CLOSED" => "closed".red(), 
+        "MERGED" => "merged".green(),
+        "DRAFT" => "draft".yellow(),
+        _ => pr.pr_info.status.normal(),
+    };
+    println!("  {} ({})", pr.pr_info.url.blue().underline(), status_colored);
+    
+    // Display title
+    if !pr.pr_info.title.is_empty() {
+        println!("  {}", pr.pr_info.title.dimmed());
+    }
+    println!(); // Empty line between PRs
 }
 
 fn find_git_directory() -> Result<PathBuf> {

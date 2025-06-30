@@ -143,12 +143,6 @@ fn extract_bitbucket_data_center_url(pr: &bitbucket_data_center_api::BitbucketDa
     format!("PR #{}", pr.id)
 }
 
-pub fn format_pr_display(pr_info: Option<PullRequestInfo>) -> (String, String) {
-    match pr_info {
-        Some(info) => (format!("{} ({})", info.url, info.status), info.title),
-        None => ("-".to_string(), String::new()),
-    }
-}
 
 pub fn clean_branch_name(branch: &str) -> String {
     if branch.starts_with("refs/heads/") {
