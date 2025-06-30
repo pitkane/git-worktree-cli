@@ -117,7 +117,7 @@ async fn fetch_bitbucket_data_center_pr(
     }
 }
 
-fn extract_bitbucket_cloud_url(pr: &bitbucket_api::BitbucketPullRequest) -> String {
+pub fn extract_bitbucket_cloud_url(pr: &bitbucket_api::BitbucketPullRequest) -> String {
     if let Some(html_link) = pr.links.get("html") {
         if let Some(href) = html_link.get("href") {
             if let Some(url) = href.as_str() {
@@ -128,7 +128,7 @@ fn extract_bitbucket_cloud_url(pr: &bitbucket_api::BitbucketPullRequest) -> Stri
     format!("PR #{}", pr.id)
 }
 
-fn extract_bitbucket_data_center_url(pr: &bitbucket_data_center_api::BitbucketDataCenterPullRequest) -> String {
+pub fn extract_bitbucket_data_center_url(pr: &bitbucket_data_center_api::BitbucketDataCenterPullRequest) -> String {
     if let Some(self_link) = pr.links.get("self") {
         if let Some(links_array) = self_link.as_array() {
             if let Some(first_link) = links_array.first() {
